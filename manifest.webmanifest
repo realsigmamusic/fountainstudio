@@ -1,0 +1,19 @@
+{
+  "name": "Fountain Studio",
+  "short_name": "Fountain",
+  "lang": "pt-BR",
+  "description": "Editor de roteiros em Fountain com PDF padrão da indústria",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1e2327",
+  "theme_color": "#1e2327",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "file_handlers": [
+    { "action": "./index.html", "accept": { "text/plain": [".fountain", ".spmd"] } }
+  ]
+}

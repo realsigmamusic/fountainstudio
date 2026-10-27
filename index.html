@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Fountain Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1e2327">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="css/preview.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body data-v="edit">
+<header id="top">
+  <button id="bDocs" title="Documentos">☰</button>
+  <input id="docName" aria-label="Nome do documento" spellcheck="false">
+  <span id="status"></span>
+  <nav id="tabs">
+    <button data-v="outline">Outline</button><button data-v="edit" class="on">Editar</button><button data-v="preview">Preview</button>
+  </nav>
+  <button id="bFold" title="Dobrar/desdobrar todas as cenas">⇕ Cenas</button>
+  <button id="bOpen">Abrir</button><button id="bSave">Salvar</button>
+  <button id="bPdf" class="primary">PDF</button>
+  <input type="file" id="file" accept=".fountain,.txt,.spmd,text/plain" hidden>
+</header>
+<main>
+  <aside id="outline" class="pane">
+    <div id="outlineOpts">
+      <label><input type="checkbox" id="oSyn" checked> sinopses</label>
+      <label><input type="checkbox" id="oNote" checked> notas</label>
+    </div>
+    <div id="outlineTree"></div>
+  </aside>
+  <section id="edwrap" class="pane"><div id="editor"></div></section>
+  <section id="prevwrap" class="pane">
+    <div id="pdfbar" hidden><span id="pdfinfo"></span><button id="pdfDl">Baixar</button><button id="pdfClose">Fechar PDF</button></div>
+    <iframe id="pdfframe" title="PDF" hidden></iframe>
+    <div id="workspace" style="display:block">
+      <div id="script" class="a4 dpi100">
+        <div class="page" id="titlepage_container"><div id="titlepage" class="title-page innerpage"></div></div>
+        <div id="screenplay_page" class="page"><div id="mainpage" class="innerpage numberonleft numberonright"></div></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<dialog id="dlgPdf">
+  <form method="dialog" id="pdfForm"><h3>Exportar PDF</h3><div id="pdfFields"></div>
+    <details id="hlBox"><summary>Destacar personagens</summary><div id="hlList"></div></details>
+    <menu><button value="cancel">Cancelar</button><button type="button" id="pdfGo" class="primary">Gerar PDF</button></menu>
+  </form>
+</dialog>
+<dialog id="dlgDocs">
+  <form method="dialog"><h3>Documentos</h3><div id="docList"></div>
+    <menu><button type="button" id="docNew" class="primary">Novo roteiro</button><button value="close">Fechar</button></menu>
+  </form>
+</dialog>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+:root{--bg:#f4f2ee;--pn:#fff;--tx:#1d1d1b;--mu:#7a7a75;--bd:#dcd8cf;--ac:#b5472b;--hl:#fff3c4;
+  --sc:#1d1d1b;--ch:#8a3b12;--tr:#6b5ca5;--se:#b5472b;--sy:#7a7a75;
+  --vscode-editor-background:#fff;--vscode-editor-foreground:#000;--vscode-editor-lineHighlightBackground:#fff3c4;
+  --vscode-editor-lineHighlightBorder:transparent;--vscode-editor-selectionBackground:#cfe3ff;--vscode-editor-selectionForeground:#000;
+  box-sizing:border-box;color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1e2327;--pn:#262c31;--tx:#e6e6e3;--mu:#98a0a6;--bd:#3a424a;--ac:#e0704f;--hl:#3a3520;
+  --sc:#f2f2ef;--ch:#e8a46f;--tr:#a99be0;--se:#e0704f;--sy:#98a0a6;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{display:flex;flex-direction:column;background:var(--bg);color:var(--tx);font:14px system-ui,sans-serif}
+button,input{font:inherit;color:var(--tx)}
+button{padding:6px 10px;border:1px solid var(--bd);background:var(--bg);border-radius:6px;cursor:pointer}
+button.on,button.primary{background:var(--ac);color:#fff;border-color:var(--ac)}
+#top{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;background:var(--pn);border-bottom:1px solid var(--bd)}
+#docName{flex:1;min-width:120px;border:1px solid transparent;background:none;padding:6px;border-radius:6px;font-weight:600}
+#docName:focus{border-color:var(--bd);background:var(--bg)}
+#status{color:var(--mu);font-size:12px}
+#tabs{display:flex;gap:4px}
+main{flex:1;min-height:0;display:grid}
+.pane{display:none;min-height:0;overflow:auto}
+body[data-v=outline] #outline,body[data-v=edit] #edwrap,body[data-v=preview] #prevwrap{display:block}
+#tabs{display:flex}
+#edwrap{background:var(--pn)}
+#editor,.cm-editor{height:100%}
+.cm-editor{background:var(--pn);color:var(--tx)}
+.cm-editor.cm-focused{outline:0}
+.cm-scroller{font:15px/1.55 betterfountain-screenplayfont,'Courier Prime',Courier,monospace;padding:8px 0}
+.cm-content{padding:0 14px;max-width:80ch;margin:0 auto;caret-color:var(--tx)}
+.cm-activeLine{background:var(--hl)}
+.cm-gutters{background:transparent;border:0;color:var(--mu)}
+.f-scene{font-weight:700;color:var(--sc)}
+.f-character{color:var(--ch)}
+.f-paren{color:var(--mu);font-style:italic}
+.f-trans{color:var(--tr)}
+.f-section{color:var(--se);font-weight:700}
+.f-synopsis{color:var(--sy);font-style:italic}
+.f-centered{text-align:center}
+.f-lyrics{font-style:italic}
+.f-note{color:var(--mu);font-style:italic}
+.cm-tooltip-autocomplete{background:var(--pn)!important;border:1px solid var(--bd)!important;border-radius:8px;overflow:hidden}
+.cm-tooltip-autocomplete li{padding:4px 10px!important;font:13px system-ui,sans-serif}
+.cm-tooltip-autocomplete li[aria-selected]{background:var(--ac)!important;color:#fff!important}
+.cm-completionDetail{opacity:.7;margin-left:8px;font-style:normal}
+#outline{padding:10px;font-size:13px}
+#outlineOpts{display:flex;gap:12px;color:var(--mu);margin-bottom:8px}
+.o{padding:5px 8px;border-radius:5px;cursor:pointer}.o:hover{background:var(--pn)}
+.o.sec{color:var(--se);font-weight:700;text-transform:uppercase;font-size:12px}
+.o.scn{font-weight:600}.o.syn{color:var(--sy);font-style:italic;font-size:12px}.o.nt{color:var(--mu);font-size:12px}
+.oc{margin-left:10px;border-left:1px solid var(--bd)}
+#prevwrap{background:color-mix(in srgb,var(--mu) 18%,var(--bg));padding:12px}
+#workspace{float:none!important;width:100%!important}
+.cur{outline:2px solid color-mix(in srgb,var(--ac) 55%,transparent);outline-offset:2px;border-radius:2px}
+#pdfbar{display:flex;gap:8px;align-items:center;margin-bottom:8px}#pdfbar span{margin-right:auto;color:var(--mu)}
+#pdfframe{width:100%;height:calc(100% - 44px);border:0;background:#fff}
+dialog{background:var(--pn);color:var(--tx);border:1px solid var(--bd);border-radius:12px;max-width:min(520px,94vw);max-height:88vh;padding:16px}
+dialog::backdrop{background:#0006}
+dialog h3{margin:0 0 10px}
+dialog menu{display:flex;gap:8px;justify-content:flex-end;padding:0;margin:14px 0 0}
+.fld{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--bd)}
+.fld input[type=text],.fld select{background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:4px 6px;max-width:55%}
+#hlList{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0}
+#hlList label{border:1px solid var(--bd);border-radius:14px;padding:2px 10px}
+.dr{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--bd)}
+.dr span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}.dr small{color:var(--mu)}
+@media(min-width:960px){
+  main{grid-template-columns:260px 1fr 1fr}
+  #tabs{display:none}
+  #outline,#edwrap,#prevwrap{display:block}
+}
+
+#workspace #script .page{background-color:#fff!important}
+
+[hidden]{display:none!important}
+
+/* ============================================================
+   PREVIEW FLUIDO
+   A fonte tem tamanho fixo (16-17px, definido em preview.css) e o texto
+   quebra linha conforme a largura disponível, em vez de a página inteira
+   encolher como uma foto. É o que deixa o roteiro legível no celular.
+   Para trocar o tamanho da letra, mude o font-size das regras .dpi100 em preview.css.
+   ============================================================ */
+#prevwrap{container-type:inline-size}              /* permite usar @container abaixo */
+#workspace .container{width:auto}
+#workspace #script,
+#workspace #script.a4.dpi100{width:auto;max-width:827px;margin:0 auto}
+#workspace #script.a4.dpi100 .page{height:auto;min-height:0}   /* altura segue o conteúdo */
+/* a página de título mantém proporção de papel */
+#workspace #script.a4.dpi100 #titlepage_container{min-height:min(1169px,141cqw)}
+#workspace #titlepage{height:auto;min-height:min(960px,125cqw)}
+
+/* Painel estreito (celular, ou preview apertado ao lado do editor) */
+@container (max-width: 560px){
+  #workspace #script.a4.dpi100 .innerpage{padding-left:34px;padding-right:34px}
+  /* números de cena: ficam dentro da margem, sem sair da página */
+  #workspace .numberonleft h3:before{left:-31px;font-size:13px}
+  #workspace .numberonright h3:after{right:-31px;font-size:13px}
+  /* diálogo mais largo, para aproveitar a tela */
+  #workspace #script .page div.dialogue{width:90%}
+  #workspace #script .page div.dialogue h4{margin-left:16%}
+  #workspace #script .page div.dialogue p.parenthetical{margin-left:7%}
+  /* diálogo duplo: continua lado a lado. O bloco "sai" das margens da página para ganhar largura
+     e cada coluna usa quase metade dela. */
+  #workspace #script .page div.dual-dialogue{width:auto;margin:2em -28px .9em -28px}
+  #workspace #script .page div.dual-dialogue div.dialogue{display:inline-block;vertical-align:top;width:48.5%;margin:0}
+  #workspace #script .page div.dual-dialogue div.dialogue.right{float:right}
+  #workspace #script .page div.dual-dialogue div.dialogue h4{margin-left:0;text-align:center}
+  #workspace #script .page div.dual-dialogue div.dialogue p.parenthetical{margin-left:5%}
+  #workspace #script .page p.section,#workspace #script .page p.synopsis{margin-left:0}
+}
+@media(max-width:600px){#prevwrap{padding:6px}}

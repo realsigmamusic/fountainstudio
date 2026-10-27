@@ -1,0 +1,1 @@
+textbox-for-pdfkit 0.2.1 — licença MIT (conforme package.json do pacote). Código vendorizado em src/vendor/textbox/.
