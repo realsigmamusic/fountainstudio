@@ -3,37 +3,155 @@ import { defaultConfig } from './core/config.js';
 import { createEditor, summarize, foldAll, unfoldAll } from './editor.js';
 import { kvGet, kvSet, listDocs, saveDoc, deleteDoc, newId } from './storage.js';
 const $ = (s) => document.querySelector(s);
-const TEMPLATE = `Title: Novo roteiro
-Credit: Escrito por
-Author: Seu Nome
+const TEMPLATE = `Title: FOUNTAIN STUDIO
+Credit: escrito por
+Author: Samuel Santana da Purificação
+Source: Baseado em vozes da minha cabeça.
 Draft date: ${new Date().toLocaleDateString('pt-BR')}
+Contact: (11) 99999-9999
+Copyright: 2026 Todos os direitos reservados.
 
-# Ato I
+# ATO I
+= Sinopse do primeiro ato
 
-= Apresentação do mundo e do conflito.
+> FADE IN:
 
-INT. COZINHA - NOITE
+INT. SALA - DAY #1#
 
-Uma cozinha pequena. ANA (30) corta cebolas e chora, ou finge chorar. [[checar continuidade]]
+O objetivo dessa cena é apresentar o primeiro personagem da nossa história fictícia.
 
-ANA
-(sem olhar)
-Você voltou cedo.
+FULANO
+Olá isso aqui é apenas um diálogo.
 
-CARLOS
-O jantar não esperava ninguém.
+INT. SALA - DAY #2#
 
-CUT TO:
+FULANO está sentado no sofá, assistindo à televisão.
 
-EXT. RUA - CONTÍNUO
+FULANO
+Vou pegar um copo de água.
 
-A chuva *escorre* pelas janelas. **Ninguém** passa.
+INT. COZINHA - DAY #3#
 
-BRICK
-Screw retirement.
+FULANO entra na cozinha e abre a geladeira.
 
-STEEL ^
-Screw retirement, tomorrow.
+Ele pega uma garrafa de água e enche um copo.
+
+INT. SALA - DAY #4#
+
+FULANO volta à sala e se senta no sofá. o objetivo dessas ultimas cenas é testar cenas em continuidade mas em cenarios diferentes.
+
+EXT. QUINTAL - DAY #5#
+
+O objetivo dessa cena é ver se o personagem FULANO vai ser reconhecido como um personagem que fala.
+
+SICRANO
+(Irritado)
+Fale alguma coisa Fulano.
+
+FULANO caminha até a porta [[ele hesita antes de abrir]] e sai.
+
+INT. SALA - NIGHT #6#
+
+FULANO está está dormindo sentado com a televisão ligada
+
+APRESENTADOR (TV)
+As autoridades pedem que todos permaneçam
+em suas casas até segunda ordem.
+
+FADE TO:
+
+# ATO II
+= Sinopse do segundo ato
+
+INT. COZINHA - NIGHT #7#
+
+Agora o objetivo é testar o diálogo duplo.
+
+FULANO
+Preciso de falar uma coisa!
+
+SICRANO ^
+Preciso confessar uma coisa!
+
+INT. QUARTO - NIGHT #8#
+
+DEUTRANO está deitado ouvindo música. É mais uma personagem sem diálogo, mas ainda assim ela faz parte da cena.
+
+~ esta é a letra de uma canção
+~ esse é um refrão
+~ letra da canção...
+
+FULANO (V.O.)
+Deutrano! Desligue esse som que já está tarde!
+
+Apenas um teste para para usar o recurso de voice over (V.O.)
+
+Agora vamos testar tratamento para caracteres especiais usando a barra invertida para \\* # @ ou \\_ por exemplo.
+
+INT. SALA - NIGHT #9#
+
+FULANO está deitado no sofá, dormindo.
+
+A televisão continua ligada.
+
+INT. COZINHA - NIGHT #10#
+
+SICRANO entra na cozinha e prepara um café.
+
+FADE TO:
+
+# ATO III
+= Sinopse do terceiro ato
+
+INT. COZINHA - NIGHT #11#
+
+Relógio mostra 3h da manhã. SICRANO está pegando uma bebida na geladeira.
+
+SICRANO (O.S.)
+(Cansado)
+Preciso dar um jeito em minha vida
+
+Objetivo dessa cena é testar o diálogo com Off screen (O.S.)
+
+EXT. QUINTAL - NIGHT #12#
+
+O objetivo dessa cena é tratar as exceções, tanto em ações quanto em personagens.
+
+@007
+Meu nome não tem letras, e por causa disso pode não ser reconhecido como o nome de personagem. Para resolver isso é só usar o @
+
+!TESTE
+
+O ponto de exclamação faz com que uma ação não seja confundida com o nome de um personagem.
+
+@007 (CONT'D)
+(sorrindo)
+Eu sou o personagem mais aleatório desse exemplo de roteiro.
+O diálogo continua mas em outra linha.
+(sério)
+Aqui nós interrompemos o diálogo, como será que o editor vai lidar com isso?
+
+[[Esta é uma nota invisível no output.]]
+
+FULANO
+Vou quebrar esse diálogo em duas partes...
+
+Aqui é uma ação que vai ficar entre os dois diálogos para ver o que acontece.
+
+FULANO (CONT'D)
+Continuação do diálogo.
+
+===
+
+INT. SALA - DAY #13#
+
+Uma cena forçada com ponto no início, e para não ficar uma cena sem nenhum personagem vamos dizer que FULANO está nela lendo um livro.
+
+*itálico* e **negrito** e _sublinhado_.
+***Este texto é negrito e itálico ao mesmo tempo.***
+
+
+> TEXTO CENTRALIZADO <
 
 > FIM <
 `;
