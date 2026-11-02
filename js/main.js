@@ -71,7 +71,7 @@ INT. COZINHA - NOITE #7#
 
 Agora o objetivo é testar o diálogo duplo.
 
-FULANO
+DEUTRANO
 Preciso de falar uma coisa!
 
 SICRANO ^
