@@ -51,7 +51,11 @@ body[data-v=outline] #outline,body[data-v=edit] #edwrap,body[data-v=preview] #pr
 #workspace{float:none!important;width:100%!important}
 .cur{outline:2px solid color-mix(in srgb,var(--ac) 55%,transparent);outline-offset:2px;border-radius:2px}
 #pdfbar{display:flex;gap:8px;align-items:center;margin-bottom:8px}#pdfbar span{margin-right:auto;color:var(--mu)}
+#pdfbar[hidden],#pdfpages[hidden]{display:none}
 #pdfframe{width:100%;height:calc(100% - 44px);border:0;background:#fff}
+#pdfpages{display:flex;flex-direction:column;align-items:center;gap:10px;height:calc(100% - 44px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+#pdfpages .pg{background:#fff;box-shadow:0 1px 6px #0006;flex:none;position:relative}
+#pdfpages .pg canvas{display:block;width:100%;height:100%}
 dialog{background:var(--pn);color:var(--tx);border:1px solid var(--bd);border-radius:12px;max-width:min(520px,94vw);max-height:88vh;padding:16px}
 dialog::backdrop{background:#0006}
 dialog h3{margin:0 0 10px}

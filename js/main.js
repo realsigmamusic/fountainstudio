@@ -447,19 +447,82 @@ $('#pdfGo').onclick = async () => {
         btn.textContent = 'Gerar PDF';
     }
 };
+let pdfDoc = null, pdfObs = null;
+// O Chrome do Android não renderiza PDF em iframe; nesses casos usamos o PDF.js
+const nativePdf = () => navigator.pdfViewerEnabled === true && !/Android/i.test(navigator.userAgent);
+
+async function renderPdfPages(url) {
+    const pdfjs = await import('./vendor/pdfjs/pdf.min.mjs');
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL('./vendor/pdfjs/pdf.worker.min.mjs', import.meta.url).href;
+    const box = $('#pdfpages');
+    pdfObs?.disconnect();
+    box.textContent = '';
+    if (pdfDoc) { pdfDoc.destroy(); pdfDoc = null; }
+    pdfDoc = await pdfjs.getDocument({ url }).promise;
+    const width = Math.min(box.clientWidth, 900);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const first = await pdfDoc.getPage(1);
+    const vp1 = first.getViewport({ scale: 1 });
+    const scale = width / vp1.width;
+    const ratio = vp1.height / vp1.width;
+    const rendered = new Set();
+    pdfObs = new IntersectionObserver(async (entries) => {
+        for (const en of entries) {
+            const div = en.target, n = +div.dataset.n;
+            if (en.isIntersecting && !rendered.has(n)) {
+                rendered.add(n);
+                const page = await pdfDoc.getPage(n);
+                const vp = page.getViewport({ scale: scale * dpr });
+                const c = document.createElement('canvas');
+                c.width = vp.width; c.height = vp.height;
+                await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+                div.replaceChildren(c);
+            }
+            else if (!en.isIntersecting && rendered.has(n)) {
+                rendered.delete(n);        // libera memória das páginas distantes
+                div.replaceChildren();
+            }
+        }
+    }, { root: box, rootMargin: '150% 0px' });
+    for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const d = document.createElement('div');
+        d.className = 'pg';
+        d.dataset.n = String(i);
+        d.style.width = width + 'px';
+        d.style.height = (width * ratio) + 'px';
+        box.append(d);
+        pdfObs.observe(d);
+    }
+}
+
 function showPdf(blob, pages) {
     if (pdfUrl)
         URL.revokeObjectURL(pdfUrl);
     pdfUrl = URL.createObjectURL(blob);
     $('#workspace').hidden = true;
     $('#pdfbar').hidden = false;
-    const f = $('#pdfframe');
-    f.hidden = false;
-    f.src = pdfUrl;
     $('#pdfinfo').textContent = `PDF · ${pages} páginas · ${(blob.size / 1024).toFixed(0)} KB`;
     setView('preview');
+    if (nativePdf()) {
+        $('#pdfpages').hidden = true;
+        const f = $('#pdfframe');
+        f.hidden = false;
+        f.src = pdfUrl;
+    }
+    else {
+        $('#pdfframe').hidden = true;
+        $('#pdfpages').hidden = false;
+        renderPdfPages(pdfUrl).catch(err => { console.error(err); alert('Não foi possível exibir o PDF. Use o botão Baixar.'); });
+    }
 }
-$('#pdfClose').onclick = () => { $('#pdfframe').hidden = true; $('#pdfbar').hidden = true; $('#workspace').hidden = false; };
+$('#pdfClose').onclick = () => {
+    $('#pdfframe').hidden = true;
+    $('#pdfpages').hidden = true;
+    $('#pdfbar').hidden = true;
+    $('#workspace').hidden = false;
+    pdfObs?.disconnect();
+    $('#pdfpages').textContent = '';
+};
 $('#pdfDl').onclick = async () => { const b = await (await fetch(pdfUrl)).blob(); saveFile(b, fname() + '.pdf', { description: 'PDF', accept: { 'application/pdf': ['.pdf'] } }); };
 /* ───────── inicialização ───────── */
 (async function init() {

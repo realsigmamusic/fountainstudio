@@ -22,7 +22,7 @@
   <button id="bFold" title="Dobrar/desdobrar todas as cenas">⇕ Cenas</button>
   <button id="bOpen">Abrir</button><button id="bSave">Salvar</button>
   <button id="bPdf" class="primary">PDF</button>
-  <input type="file" id="file" accept=".fountain,.txt,.spmd,text/plain" hidden>
+  <input type="file" id="file" hidden>
 </header>
 <main>
   <aside id="outline" class="pane">
@@ -36,6 +36,7 @@
   <section id="prevwrap" class="pane">
     <div id="pdfbar" hidden><span id="pdfinfo"></span><button id="pdfDl">Baixar</button><button id="pdfClose">Fechar PDF</button></div>
     <iframe id="pdfframe" title="PDF" hidden></iframe>
+    <div id="pdfpages" hidden></div>
     <div id="workspace" style="display:block">
       <div id="script" class="a4 dpi100">
         <div class="page" id="titlepage_container"><div id="titlepage" class="title-page innerpage"></div></div>
