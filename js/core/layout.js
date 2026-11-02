@@ -54,22 +54,39 @@ export function layoutLines(config, parsedDocument) {
     return parsedDocument.lines;
 }
 /**
- * Devolve onde cada página começa: [{ line, page }], onde `line` é a linha do texto-fonte
- * do primeiro bloco da página e `page` é o número da página (a partir de 2).
+ * Devolve onde cada página começa no PDF, de forma exata:
+ *  - line:  linha do texto-fonte do bloco onde a página começa;
+ *  - skip:  quantas palavras desse bloco ainda ficam na página anterior (0 = a página começa no início do bloco);
+ *  - first: primeira palavra da nova página (usada para conferir a posição no preview);
+ *  - page:  número da nova página (a partir de 2).
  */
 export function pageStarts(config, parsedDocument) {
     const lines = layoutLines(config, parsedDocument);
+    const words = (t) => (t || "").split(/\s+/).filter(Boolean);
     const out = [];
     let page = 1;
     for (let i = 0; i < lines.length; i++) {
         if (lines[i].type !== "page_break")
             continue;
-        let j = i + 1;
-        while (j < lines.length && (lines[j].type === "page_break" || lines[j].type === "separator" || !lines[j].token))
-            j++;
         page++;
-        if (j < lines.length)
-            out.push({ line: lines[j].token.line, page, split: lines[j].token === (lines[i - 1] && lines[i - 1].token) });
+        // primeira linha "de verdade" da nova página (ignora separadores e as linhas (MORE)/(CONT'D) inseridas pelo liner)
+        let j = i + 1;
+        while (j < lines.length) {
+            const l = lines[j];
+            const real = l.type !== "page_break" && l.type !== "separator" && l.token && l.token.lines && l.token.lines.indexOf(l) !== -1 && l.text;
+            if (real)
+                break;
+            if (l.type === "page_break")
+                break;
+            j++;
+        }
+        if (j >= lines.length || lines[j].type === "page_break")
+            continue;
+        const l = lines[j], k = l.token.lines.indexOf(l);
+        let skip = 0;
+        for (let n = 0; n < k; n++)
+            skip += words(l.token.lines[n].text).length;
+        out.push({ line: l.token.line, page, skip, first: words(l.text)[0] || "" });
     }
     return out;
 }

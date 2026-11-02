@@ -78,9 +78,9 @@ INT. QUARTO - NIGHT #8#
 
 DEUTRANO está deitado ouvindo música. É mais uma personagem sem diálogo, mas ainda assim ela faz parte da cena.
 
-~ esta é a letra de uma canção
-~ esse é um refrão
-~ letra da canção...
+~esta é a letra de uma canção
+~esse é um refrão
+~letra da canção...
 
 FULANO (V.O.)
 Deutrano! Desligue esse som que já está tarde!
@@ -163,26 +163,56 @@ let ed;
 let summary = { lineClass: new Map(), headings: [], characters: [], locations: [], times: [] };
 let srcEls = [];
 let timer = 0, saveTimer = 0, folded = false, pdfUrl = '';
-/* marca no preview onde cada página começa no PDF */
+/* acha o início da n-ésima palavra (a partir de 0) dentro de um elemento */
+function wordStart(el, n) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let count = 0, node, prevOpen = false;
+    while ((node = walker.nextNode())) {
+        const re = /\S+/g;
+        let m;
+        while ((m = re.exec(node.data))) {
+            const continues = m.index === 0 && prevOpen; // palavra que continua do trecho anterior (ex.: negrito seguido de vírgula)
+            if (!continues) {
+                if (count === n)
+                    return { node, offset: m.index, word: m[0] };
+                count++;
+            }
+            prevOpen = false;
+        }
+        if (node.data.length)
+            prevOpen = /\S$/.test(node.data);
+    }
+    return null;
+}
+/* marca no preview exatamente onde cada página começa no PDF */
 function markPageBreaks(root, starts) {
     root.querySelectorAll('.pgbrk').forEach(n => n.remove());
-    for (const { line, page } of starts) {
-        let el = root.querySelector(`[id="sourceline_${line}"]`) || root.querySelector(`[data-position="${line}"]`);
+    const strip = (w) => w.replace(/[*_\\\[\]]/g, '');
+const same = (a, b) => { a = strip(a); b = strip(b); return !!a && !!b && (a.startsWith(b) || b.startsWith(a)); };
+    for (const { line, page, skip, first } of starts) {
+        const el = root.querySelector(`[id="sourceline_${line}"]`) || root.querySelector(`[data-position="${line}"]`);
         if (!el)
             continue;
+        const m = document.createElement('span');
+        m.className = 'pgbrk';
+        m.dataset.page = String(page);
+        if (skip > 0 && !el.closest('.dual-dialogue')) { // a página começa no meio do bloco, em uma palavra específica
+            const w = wordStart(el, skip);
+            if (w && same(w.word, first)) {
+                w.node.splitText(w.offset).before(m);
+                continue;
+            }
+        }
         let blk = el.closest('h3') || el;
         const dual = blk.closest('.dual-dialogue');
         if (dual)
             blk = dual;
         else
             while (blk.parentElement !== root && blk.parentElement.matches('.dialogue') && blk === blk.parentElement.firstElementChild)
-                blk = blk.parentElement; // início de diálogo: a marca vai antes do bloco inteiro
+                blk = blk.parentElement;
         const prev = blk.previousElementSibling;
         if (prev && prev.tagName === 'HR')
             prev.remove(); // quebra forçada (===): a marca substitui o <hr>
-        const m = document.createElement('span');
-        m.className = 'pgbrk';
-        m.dataset.page = String(page);
         blk.before(m);
     }
 }
@@ -196,8 +226,7 @@ function refresh() {
     mp.className = 'innerpage' + { left: ' numberonleft', right: ' numberonright', both: ' numberonleft numberonright' }[cfg.scenes_numbers];
     mp.innerHTML = parsed.scriptHtml;
     try {
-        const pc = { ...cfg, print_dialogue_numbers: false };
-        markPageBreaks(mp, pageStarts(pc, parse(text, pc, false)));
+        markPageBreaks(mp, pageStarts({ ...cfg }, parse(text, { ...cfg }, false)));
     }
     catch (err) {
         console.warn('Marcação de páginas indisponível:', err);
@@ -459,6 +488,7 @@ $('#pdfGo').onclick = async () => {
         cfg[i.dataset.key] = i.type === 'checkbox' ? i.checked : i.value;
     });
     await kvSet('pdf-cfg', cfg);
+    refresh(); // as opções do PDF (papel, divisão de diálogo etc.) mudam onde as páginas quebram
     const hl = [...document.querySelectorAll('#hlList input:checked')].map(i => i.value);
     btn.disabled = true;
     btn.textContent = 'Gerando…';
