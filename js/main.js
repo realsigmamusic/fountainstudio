@@ -5,7 +5,7 @@ import { kvGet, kvSet, listDocs, saveDoc, deleteDoc, newId } from './storage.js'
 import { pageStarts } from './core/layout.js';
 import { extractScenes } from './core/production.js';
 const ENV_LABEL_SHORT = { int: 'INT', ext: 'EXT', mixed: 'INT-EXT', other: '' };
-import { renderProduction, visibleScenes, currentFilters, onShootingOrder, selectedCharacter, onCharacterSheet } from './production-ui.js';
+import { renderProduction, visibleScenes, currentFilters, onShootingOrder, selectedCharacter, onCharacterSheet, castOf } from './production-ui.js';
 const $ = (s) => document.querySelector(s);
 const TEMPLATE = `Title: FOUNTAIN STUDIO
 Credit: escrito por
@@ -396,7 +396,7 @@ onShootingOrder(async () => {
         refresh(); // garante que as cenas correspondem ao texto atual
         const { makeShootingOrder } = await import('./production-pdf.js'); // pdfkit só é baixado quando necessário
         const filters = currentFilters();
-        const { blob, pages } = await makeShootingOrder({ scenes: visibleScenes(), filters, docName: doc.name });
+        const { blob, pages } = await makeShootingOrder({ scenes: visibleScenes(), filters, docName: doc.name, castOf });
         const tag = [filters.location, filters.env && ENV_LABEL_SHORT[filters.env], filters.period].filter(Boolean).join(' ');
         showPdf(blob, pages, `${fname()} - ordem de filmagem${tag ? ' - ' + tag.replace(/[\\/:*?"<>|]+/g, '') : ''}`);
     }

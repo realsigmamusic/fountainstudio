@@ -1,8 +1,9 @@
-import { ENV_LABEL, ALL, filterScenes, facets, groupByLocation, characterSheets } from './core/production.js';
+import { ENV_LABEL, ALL, filterScenes, facets, groupByLocation, characterSheets, productionCast } from './core/production.js';
 
 /* Estado da aba (só vive na tela; não vai para o arquivo Fountain). Sobrevive às re-renderizações. */
 const state = { env: ALL, location: ALL, period: ALL, group: false, character: '' };
 let sheets = new Map();
+let cast = [];  // elenco de cada cena (mesmo índice de `scenes`)
 let lastScenes = [], lastGoto = () => {};
 
 const $ = (s) => document.querySelector(s);
@@ -22,6 +23,22 @@ function sanitize(f) {
         if (state[key] && !valid[key].includes(state[key])) state[key] = ALL;
 }
 
+/** Personagens da cena: com fala em destaque; sem fala em cinza/itálico ("?" = nunca fala no roteiro). */
+function castCell(td, c) {
+    td.className = 'cast';
+    if (!c || (!c.speaking.length && !c.silent.length)) { td.textContent = '—'; return; }
+    const add = (text, cls, title) => {
+        const sp = document.createElement('span');
+        sp.textContent = text;
+        if (cls) sp.className = cls;
+        if (title) sp.title = title;
+        if (td.childNodes.length) td.append(', ');
+        td.append(sp);
+    };
+    for (const n of c.speaking) add(n, 'cs', 'Com fala');
+    for (const n of c.silent) add(n.name + (n.known ? '' : '?'), 'cn', n.known ? 'Sem fala nesta cena' : 'Sem fala: nome em maiúsculas na ação, mas não fala em nenhuma cena (confira)');
+}
+
 function sceneRow(body, sc) {
     const tr = body.insertRow();
     tr.title = sc.heading;
@@ -31,6 +48,7 @@ function sceneRow(body, sc) {
         td.textContent = text;
         if (cls) td.className = cls;
     }
+    castCell(tr.insertCell(), cast[sc.index]);
     tr.onclick = () => lastGoto(sc.line);
 }
 
@@ -51,6 +69,7 @@ export function renderProduction(scenes, onGoto) {
 
     /* personagens com fala (sempre sobre o roteiro inteiro, na ordem original) */
     sheets = characterSheets(scenes);
+    cast = productionCast(scenes);
     if (!sheets.has(state.character)) state.character = '';
     const csel = $('#cSel');
     csel.textContent = '';
@@ -79,7 +98,7 @@ export function renderProduction(scenes, onGoto) {
     }
     const table = document.createElement('table');
     const head = table.createTHead().insertRow();
-    for (const h of ['Cena', 'Ambiente', 'Localização', 'Período'])
+    for (const h of ['Cena', 'Ambiente', 'Localização', 'Período', 'Personagens'])
         head.append(Object.assign(document.createElement('th'), { textContent: h }));
     if (state.group) {
         for (const g of groupByLocation(filtered)) {
@@ -87,7 +106,7 @@ export function renderProduction(scenes, onGoto) {
             const row = body.insertRow();
             row.className = 'grp';
             const th = document.createElement('th');
-            th.colSpan = 4;
+            th.colSpan = 5;
             th.textContent = `${g.location} — ${plural(g.scenes.length, 'cena', 'cenas')}`;
             row.append(th);
             for (const sc of g.scenes) sceneRow(body, sc);
@@ -118,3 +137,6 @@ export const onShootingOrder = (fn) => { $('#fDoc').onclick = fn; };
 export const selectedCharacter = () => sheets.get(state.character) ?? null;
 export const onCharacterSheet = (fn) => { $('#cDoc').onclick = fn; };
 $('#cSel').onchange = (e) => { state.character = e.target.value; $('#cDoc').disabled = !state.character; };
+
+/** Elenco (com e sem fala) de uma cena, para os documentos. */
+export const castOf = (scene) => cast[scene.index] ?? { speaking: [], silent: [] };

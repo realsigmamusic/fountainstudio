@@ -199,3 +199,88 @@ export function characterSheets(scenes) {
     }
     return new Map([...map].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR')));
 }
+
+/* ───────── personagens com e sem fala ─────────
+ * Regras (especificação 3.2):
+ *  - quem tem elemento de diálogo na cena participa COM fala (mesmo que também apareça nas ações);
+ *  - nomes em MAIÚSCULAS em elementos de ação, sem diálogo naquela cena, participam SEM fala.
+ * Nomes de personagens que falam em qualquer ponto do roteiro são reconhecidos com certeza (known:true).
+ * Outras palavras em maiúsculas na ação (ex.: um personagem mudo) entram como candidatos (known:false),
+ * pois também podem ser efeitos sonoros ou ênfase; a interface os marca com "?".
+ */
+
+/* palavras em maiúsculas que NÃO são personagens (transições, períodos, indicações técnicas, ênfases comuns) */
+const NOT_CHARACTERS = new Set(`CUT TO FADE IN OUT DISSOLVE SMASH MATCH BACK INTERCUT FLASHBACK INSERT SUPER SUPERIMPOSE TITLE TITLES CARD
+INT EXT EST DAY NIGHT DAWN DUSK MORNING EVENING LATER CONTINUOUS MOMENTS SAME CONT THE AND FOR WITH FROM INTO
+SFX VFX FX POV ANGLE CLOSE WIDE SHOT PAN TILT ZOOM BEAT PAUSE SILENCE END
+CORTA CORTE PARA FUSAO FUSÃO ESCURECE CLAREIA DIA NOITE MANHA MANHÃ TARDE AMANHECER ANOITECER DEPOIS CONTINUA CONTINUAÇÃO CONTÍNUO
+BANG BOOM CRASH SPLASH BEEP KNOCK BUZZ RING TOC PUM BUM BAM
+MESMO MESMA SEM COM POR UMA UNS UMAS DOS DAS NOS NAS AOS FIM TÍTULO TITULO LEGENDA SOM EFEITO IMAGEM PLANO CENA`.split(/\s+/));
+
+const WORD = /[\p{Lu}][\p{Lu}'’\-]*/gu;
+const BOUND = (name) => new RegExp(`(?<![\\p{L}\\p{N}])${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\p{L}\\p{N}])`, 'gu');
+
+/** Nomes (com fala) em todo o roteiro: base para reconhecer personagens citados na ação. */
+export function knownCharacters(scenes) {
+    const names = new Set();
+    for (const sc of scenes) for (const n of speakingCharacters(sc)) names.add(n);
+    return names;
+}
+
+/**
+ * Elenco de uma cena: { speaking:[nome], silent:[{name, known}] }.
+ * Ordem: por primeira fala / primeira aparição na ação. `known` = nomes que falam em outra parte do roteiro.
+ */
+export function sceneCast(scene, known) {
+    const speaking = speakingCharacters(scene);
+    const talk = new Set(speaking);
+    const silent = new Map();
+    const places = scene.location ? scene.location.split(/[^\p{L}\p{N}]+/u) : [];
+    const ordered = [...known].sort((a, b) => b.length - a.length); // nomes longos primeiro ("MARIA JOSE" antes de "MARIA")
+
+    for (const b of sceneBlocks(scene)) {
+        if (b.kind !== 'action' && b.kind !== 'centered') continue;
+        let text = ' ' + b.text + ' ';
+        const hits = [];   // { at, name, known }
+        const spans = [];  // trechos já reconhecidos como personagens conhecidos [início, fim)
+        /* 1) personagens conhecidos (reconhecimento exato); o trecho achado é apagado para não ser recontado */
+        for (const name of ordered) {
+            text = text.replace(BOUND(name), (m, at) => {
+                hits.push({ at, name, known: true });
+                spans.push([at, at + m.length]);
+                return ' '.repeat(m.length);
+            });
+        }
+        /* 2) outras palavras em maiúsculas (candidatos); sequências viram um só nome ("DONA CLARA") */
+        const onlySpace = (from, to) => !/\S/.test(text.slice(from, to));
+        let run = null; // { at, end, words }
+        const flush = () => {
+            if (run) {
+                // colado a um personagem conhecido ("MARIA JOSE"): é parte do nome, não outro personagem
+                const glued = spans.some(([s, e]) => (e <= run.at && onlySpace(e, run.at)) || (s >= run.end && onlySpace(run.end, s)));
+                if (!glued) hits.push({ at: run.at, name: run.words.join(' '), known: false });
+            }
+            run = null;
+        };
+        for (const m of text.matchAll(WORD)) {
+            const w = m[0].replace(/^[-'’]+|[-'’]+$/g, '');
+            const ok = w.length >= 3 && !NOT_CHARACTERS.has(w) && !places.includes(w) && /\p{Lu}{2}/u.test(w);
+            if (run && !(ok && onlySpace(run.end, m.index))) flush(); // qualquer coisa entre as palavras encerra o nome
+            if (!ok) continue;
+            if (run) { run.words.push(w); run.end = m.index + m[0].length; }
+            else run = { at: m.index, end: m.index + m[0].length, words: [w] };
+        }
+        flush();
+        for (const h of hits.sort((x, y) => x.at - y.at)) {
+            if (talk.has(h.name) || silent.has(h.name)) continue;
+            silent.set(h.name, { name: h.name, known: h.known });
+        }
+    }
+    return { speaking, silent: [...silent.values()] };
+}
+
+/** Elenco de todas as cenas, no mesmo índice de `scenes`. */
+export function productionCast(scenes) {
+    const known = knownCharacters(scenes);
+    return scenes.map((sc) => sceneCast(sc, known));
+}

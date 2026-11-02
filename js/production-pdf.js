@@ -153,11 +153,12 @@ const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
  * (na ordem em que aparecem) e, em cada período, seguem a ordem original do roteiro.
  * @param scenes cenas visíveis; @param filters filtros ativos (só para o texto de identificação)
  */
-export async function makeShootingOrder({ scenes, filters, docName }) {
+export async function makeShootingOrder({ scenes, filters, docName, castOf }) {
     const doc = await newDoc();
     const groups = groupByLocation(scenes);
     const pageLoc = [];
     const pageScenes = [[]]; // números das cenas presentes em cada página (para o cabeçalho)
+    const hasGuess = !!castOf && scenes.some((sc) => castOf(sc).silent.some((n) => !n.known)); // candidatos "?" → nota na capa
     let curLoc = '', curScene = '';
     doc.on('pageAdded', () => { pageLoc.push(curLoc); pageScenes.push(curScene ? [curScene] : []); }); // cena em andamento continua na nova página
     pageLoc.push(curLoc); // 1ª página
@@ -174,6 +175,7 @@ export async function makeShootingOrder({ scenes, filters, docName }) {
         .text(tags.length ? tags.join('  ·  ') : 'Todas as cenas', { width: COL.w });
     doc.text(`${plural(scenes.length, 'cena', 'cenas')} · ${plural(groups.length, 'locação', 'locações')}`, { width: COL.w });
     doc.text(`Cenas: ${scenes.map((s) => s.number).join(', ')}`, { width: COL.w });
+    if (hasGuess) doc.moveDown(0.3).font('I').fontSize(8).text('? = nome em maiúsculas na ação que não fala em nenhuma cena do roteiro (pode ser personagem mudo, objeto ou ênfase: confira).', { width: COL.w });
     doc.moveDown(0.8).fillColor('#000').fontSize(SIZE);
 
     groups.forEach((g, gi) => {
@@ -197,9 +199,12 @@ export async function makeShootingOrder({ scenes, filters, docName }) {
                 curScene = sc.number;
                 sceneBand(doc, sc);
                 if (!pageScenes.at(-1).includes(sc.number)) pageScenes.at(-1).push(sc.number);
-                const who = speakingCharacters(sc);
-                if (who.length) {
-                    doc.font('I').fontSize(9).fillColor(GRAY).text(`Com fala: ${who.join(', ')}`, PAGE.left, doc.y, { width: COL.w });
+                const c = castOf ? castOf(sc) : { speaking: speakingCharacters(sc), silent: [] };
+                const parts = [];
+                if (c.speaking.length) parts.push(`Com fala: ${c.speaking.join(', ')}`);
+                if (c.silent.length) parts.push(`Sem fala: ${c.silent.map((n) => n.name + (n.known ? '' : '?')).join(', ')}`);
+                if (parts.length) {
+                    doc.font('I').fontSize(9).fillColor(GRAY).text(parts.join('   ·   '), PAGE.left, doc.y, { width: COL.w });
                     doc.moveDown(0.5);
                 }
                 doc.fillColor('#000').fontSize(SIZE);
