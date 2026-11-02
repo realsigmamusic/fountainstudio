@@ -133,14 +133,14 @@ export function groupByLocation(scenes) {
 
 const SKIP = new Set(['separator', 'section', 'page_break', 'dual_dialogue_begin', 'dual_dialogue_end', 'dialogue_begin', 'dialogue_end']);
 
-/** Nome canônico do personagem: sem extensão "(V.O.)", sem "@" de personagem forçado e sem "^" de diálogo duplo. */
+/** Nome canônico do personagem: sem extensão "(V.O.)", sem "@" de personagem forçado, sem "^" de diálogo duplo e sem asteriscos de formatação. */
 export function characterName(text) {
-    return String(text ?? '').replace(/\(.*\)/, '').replace(/^\s*@/, '').replace(/\^/g, '').replace(/\s+/g, ' ').trim();
+    return String(text ?? '').replace(/\(.*\)/, '').replace(/^\s*@/, '').replace(/\^/g, '').replace(/\*+/g, '').replace(/\s+/g, ' ').trim();
 }
 
 /**
  * Converte os tokens de uma cena em blocos simples, na ordem do roteiro:
- *  { kind:'action'|'transition'|'centered', text }
+ *  { kind:'action'|'transition'|'centered', text, forced } — forced: ação forçada com "!" no Fountain
  *  { kind:'dialogue', character, label, lines:[{type:'parenthetical'|'dialogue', text}] }
  * `label` é o texto do personagem como escrito (ex.: "MARIA (V.O.)"); `character` é o nome canônico.
  * Diálogos duplos viram blocos em sequência. Tokens ignorados pelo parser (ignore) são descartados.
@@ -159,7 +159,7 @@ export function sceneBlocks(scene) {
             cur.lines.push({ type: t.type, text });
         } else if (t.type === 'action' || t.type === 'transition' || t.type === 'centered') {
             cur = null;
-            if (text) blocks.push({ kind: t.type, text });
+            if (text) blocks.push({ kind: t.type, text, forced: !!t.forced });
         }
     }
     return blocks;
@@ -220,10 +220,18 @@ MESMO MESMA SEM COM POR UMA UNS UMAS DOS DAS NOS NAS AOS FIM TÍTULO TITULO LEGE
 const WORD = /[\p{Lu}][\p{Lu}'’\-]*/gu;
 const BOUND = (name) => new RegExp(`(?<![\\p{L}\\p{N}])${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\p{L}\\p{N}])`, 'gu');
 
-/** Nomes (com fala) em todo o roteiro: base para reconhecer personagens citados na ação. */
+/**
+ * Personagens que falam em QUALQUER ponto do roteiro: base para reconhecer quem é citado na ação.
+ * Map: nome em MAIÚSCULAS (chave de comparação) → nome como escrito na primeira fala.
+ * A chave é maiúscula porque na ação só maiúsculas contam; assim um cue forçado em caixa mista
+ * ("@Deutrano") também é reconhecido quando a ação traz "DEUTRANO".
+ */
 export function knownCharacters(scenes) {
-    const names = new Set();
-    for (const sc of scenes) for (const n of speakingCharacters(sc)) names.add(n);
+    const names = new Map();
+    for (const sc of scenes) for (const n of speakingCharacters(sc)) {
+        const key = n.toUpperCase();
+        if (!names.has(key)) names.set(key, n);
+    }
     return names;
 }
 
@@ -233,46 +241,49 @@ export function knownCharacters(scenes) {
  */
 export function sceneCast(scene, known) {
     const speaking = speakingCharacters(scene);
-    const talk = new Set(speaking);
+    const talk = new Set(speaking.map((n) => n.toUpperCase()));
     const silent = new Map();
     const places = scene.location ? scene.location.split(/[^\p{L}\p{N}]+/u) : [];
-    const ordered = [...known].sort((a, b) => b.length - a.length); // nomes longos primeiro ("MARIA JOSE" antes de "MARIA")
+    const ordered = [...known.keys()].sort((a, b) => b.length - a.length); // nomes longos primeiro ("MARIA JOSE" antes de "MARIA")
 
     for (const b of sceneBlocks(scene)) {
-        if (b.kind !== 'action' && b.kind !== 'centered') continue;
+        if (b.kind !== 'action') continue; // centralizado (> TEXTO <), transição e diálogo não são cogitados
         let text = ' ' + b.text + ' ';
         const hits = [];   // { at, name, known }
         const spans = [];  // trechos já reconhecidos como personagens conhecidos [início, fim)
         /* 1) personagens conhecidos (reconhecimento exato); o trecho achado é apagado para não ser recontado */
         for (const name of ordered) {
             text = text.replace(BOUND(name), (m, at) => {
-                hits.push({ at, name, known: true });
+                hits.push({ at, name: known.get(name), known: true });
                 spans.push([at, at + m.length]);
                 return ' '.repeat(m.length);
             });
         }
-        /* 2) outras palavras em maiúsculas (candidatos); sequências viram um só nome ("DONA CLARA") */
-        const onlySpace = (from, to) => !/\S/.test(text.slice(from, to));
-        let run = null; // { at, end, words }
-        const flush = () => {
-            if (run) {
-                // colado a um personagem conhecido ("MARIA JOSE"): é parte do nome, não outro personagem
-                const glued = spans.some(([s, e]) => (e <= run.at && onlySpace(e, run.at)) || (s >= run.end && onlySpace(run.end, s)));
-                if (!glued) hits.push({ at: run.at, name: run.words.join(' '), known: false });
+        /* 2) outras palavras em maiúsculas (candidatos); sequências viram um só nome ("DONA CLARA").
+         *    Linha forçada com "!" é ação por decisão do autor: maiúsculas ali são estilo, não candidatos. */
+        if (!b.forced) {
+            const onlySpace = (from, to) => !/\S/.test(text.slice(from, to));
+            let run = null; // { at, end, words }
+            const flush = () => {
+                if (run) {
+                    // colado a um personagem conhecido ("MARIA JOSE"): é parte do nome, não outro personagem
+                    const glued = spans.some(([s, e]) => (e <= run.at && onlySpace(e, run.at)) || (s >= run.end && onlySpace(run.end, s)));
+                    if (!glued) hits.push({ at: run.at, name: run.words.join(' '), known: false });
+                }
+                run = null;
+            };
+            for (const m of text.matchAll(WORD)) {
+                const w = m[0].replace(/^[-'’]+|[-'’]+$/g, '');
+                const ok = w.length >= 3 && !NOT_CHARACTERS.has(w) && !places.includes(w) && /\p{Lu}{2}/u.test(w);
+                if (run && !(ok && onlySpace(run.end, m.index))) flush(); // qualquer coisa entre as palavras encerra o nome
+                if (!ok) continue;
+                if (run) { run.words.push(w); run.end = m.index + m[0].length; }
+                else run = { at: m.index, end: m.index + m[0].length, words: [w] };
             }
-            run = null;
-        };
-        for (const m of text.matchAll(WORD)) {
-            const w = m[0].replace(/^[-'’]+|[-'’]+$/g, '');
-            const ok = w.length >= 3 && !NOT_CHARACTERS.has(w) && !places.includes(w) && /\p{Lu}{2}/u.test(w);
-            if (run && !(ok && onlySpace(run.end, m.index))) flush(); // qualquer coisa entre as palavras encerra o nome
-            if (!ok) continue;
-            if (run) { run.words.push(w); run.end = m.index + m[0].length; }
-            else run = { at: m.index, end: m.index + m[0].length, words: [w] };
+            flush();
         }
-        flush();
         for (const h of hits.sort((x, y) => x.at - y.at)) {
-            if (talk.has(h.name) || silent.has(h.name)) continue;
+            if (talk.has(h.name.toUpperCase()) || silent.has(h.name)) continue;
             silent.set(h.name, { name: h.name, known: h.known });
         }
     }

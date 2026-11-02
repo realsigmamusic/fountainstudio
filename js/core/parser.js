@@ -389,6 +389,7 @@ export var parse = function (original_script, cfg, generate_html) {
             }
             else if (thistoken.text.length && thistoken.text[0] === "!") {
                 thistoken.type = "action";
+                thistoken.forced = true; // "!" = ação forçada (o autor diz que NÃO é cue de personagem); usado pela aba Produção
                 thistoken.text = thistoken.text.substr(1);
                 processActionBlock(thistoken);
             }
