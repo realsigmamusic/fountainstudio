@@ -1,7 +1,8 @@
-import { ENV_LABEL, ALL, filterScenes, facets, groupByLocation } from './core/production.js';
+import { ENV_LABEL, ALL, filterScenes, facets, groupByLocation, characterSheets } from './core/production.js';
 
 /* Estado da aba (só vive na tela; não vai para o arquivo Fountain). Sobrevive às re-renderizações. */
-const state = { env: ALL, location: ALL, period: ALL, group: false };
+const state = { env: ALL, location: ALL, period: ALL, group: false, character: '' };
+let sheets = new Map();
 let lastScenes = [], lastGoto = () => {};
 
 const $ = (s) => document.querySelector(s);
@@ -47,6 +48,16 @@ export function renderProduction(scenes, onGoto) {
     fillSelect($('#fPer'), 'Todos', f.period, state.period);
     $('#fGroup').checked = state.group;
     const filtered = filterScenes(scenes, state);
+
+    /* personagens com fala (sempre sobre o roteiro inteiro, na ordem original) */
+    sheets = characterSheets(scenes);
+    if (!sheets.has(state.character)) state.character = '';
+    const csel = $('#cSel');
+    csel.textContent = '';
+    csel.append(new Option(sheets.size ? 'Escolha o personagem…' : 'Nenhum personagem com fala', ''));
+    for (const [name, c] of sheets) csel.append(new Option(`${name} (${plural(c.speeches, 'fala', 'falas')} · ${plural(c.scenes.length, 'cena', 'cenas')})`, name));
+    csel.value = state.character;
+    $('#cDoc').disabled = !state.character;
     const active = state.env || state.location || state.period;
     $('#fClear').disabled = !active;
     $('#fDoc').disabled = !filtered.length;
@@ -102,3 +113,8 @@ export const visibleScenes = () => filterScenes(lastScenes, state);
 /** Filtros ativos (cópia) e callback do botão que gera a ordem de filmagem. */
 export const currentFilters = () => ({ env: state.env, location: state.location, period: state.period });
 export const onShootingOrder = (fn) => { $('#fDoc').onclick = fn; };
+
+/** Folha de falas do personagem escolhido (ou null) e callback do botão. */
+export const selectedCharacter = () => sheets.get(state.character) ?? null;
+export const onCharacterSheet = (fn) => { $('#cDoc').onclick = fn; };
+$('#cSel').onchange = (e) => { state.character = e.target.value; $('#cDoc').disabled = !state.character; };

@@ -216,3 +216,56 @@ export async function makeShootingOrder({ scenes, filters, docName }) {
     });
     return { blob: await doc.done, pages };
 }
+
+/* ───────── folha individual de falas ───────── */
+
+const extensionOf = (label) => (label.match(/\(.*\)/) ?? [''])[0];
+
+/**
+ * Folha de falas de um personagem, para o ator.
+ * @param character item de characterSheets(); as cenas já vêm na ordem narrativa original.
+ * Cada cena traz o número e o cabeçalho originais; só as falas do personagem são impressas.
+ */
+export async function makeCharacterSheet({ character, docName }) {
+    const doc = await newDoc();
+    const pageScenes = [[]];
+    let curScene = '';
+    doc.on('pageAdded', () => pageScenes.push(curScene ? [curScene] : []));
+    const SP = 12, X = PAGE.left + 14, W = COL.w - 14;
+
+    /* título: nome do personagem em destaque */
+    doc.font('N').fontSize(9).fillColor(GRAY).text('FOLHA DE FALAS', PAGE.left, PAGE.top, { characterSpacing: 2 });
+    doc.font('B').fontSize(28).fillColor('#000').text(character.name, { width: COL.w });
+    doc.moveDown(0.2).font('N').fontSize(10).fillColor(GRAY)
+        .text(`${docName || 'Roteiro'}`, { width: COL.w });
+    doc.text(`${plural(character.speeches, 'fala', 'falas')} · ${plural(character.scenes.length, 'cena', 'cenas')}  —  cenas: ${character.scenes.map((e) => e.scene.number).join(', ')}`, { width: COL.w });
+    doc.moveDown(0.8).fillColor('#000');
+
+    for (const { scene, speeches } of character.scenes) {
+        curScene = scene.number;
+        sceneBand(doc, scene, { keep: 60 });
+        if (!pageScenes.at(-1).includes(scene.number)) pageScenes.at(-1).push(scene.number);
+        for (const sp of speeches) {
+            const ext = extensionOf(sp.label);
+            const h = sp.parts.reduce((n, t) => n + textHeight(doc, t, W, SP) + 4, ext ? 12 : 0);
+            need(doc, Math.min(h, 70));
+            if (ext) doc.font('I').fontSize(9).fillColor(GRAY).text(ext, X, doc.y, { width: W });
+            doc.font('N').fontSize(SP).fillColor('#000');
+            for (const t of sp.parts) { inline(doc, t, X, W); doc.moveDown(0.25); }
+            doc.moveDown(0.5);
+        }
+        /* separação visual entre cenas */
+        doc.moveDown(0.4);
+        const y = doc.y;
+        if (y < PAGE.h - PAGE.bottom - 10) doc.moveTo(PAGE.left, y).lineTo(PAGE.w - PAGE.right, y).lineWidth(0.5).strokeColor('#cccccc').stroke();
+        doc.y = y + 12;
+        doc.fillColor('#000').fontSize(SIZE);
+    }
+
+    const title = (docName || 'Roteiro').toUpperCase();
+    const { pages } = finishDoc(doc, {
+        headerFor: (i) => `${title}  ·  FALAS DE ${character.name}${pageScenes[i].length ? '  ·  ' + (pageScenes[i].length > 1 ? 'CENAS ' : 'CENA ') + pageScenes[i].join(', ') : ''}`,
+        footerLeft: `Fountain Studio · gerado em ${new Date().toLocaleDateString('pt-BR')}`,
+    });
+    return { blob: await doc.done, pages };
+}

@@ -5,7 +5,7 @@ import { kvGet, kvSet, listDocs, saveDoc, deleteDoc, newId } from './storage.js'
 import { pageStarts } from './core/layout.js';
 import { extractScenes } from './core/production.js';
 const ENV_LABEL_SHORT = { int: 'INT', ext: 'EXT', mixed: 'INT-EXT', other: '' };
-import { renderProduction, visibleScenes, currentFilters, onShootingOrder } from './production-ui.js';
+import { renderProduction, visibleScenes, currentFilters, onShootingOrder, selectedCharacter, onCharacterSheet } from './production-ui.js';
 const $ = (s) => document.querySelector(s);
 const TEMPLATE = `Title: FOUNTAIN STUDIO
 Credit: escrito por
@@ -365,6 +365,28 @@ function goToScene(line) {
     ed.goToLine(line);
 }
 $('#bProd').onclick = toggleProduction;
+onCharacterSheet(async () => {
+    const btn = $('#cDoc'), label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Gerando…';
+    await new Promise(r => setTimeout(r, 30));
+    try {
+        refresh();
+        const character = selectedCharacter();
+        if (!character) return;
+        const { makeCharacterSheet } = await import('./production-pdf.js');
+        const { blob, pages } = await makeCharacterSheet({ character, docName: doc.name });
+        showPdf(blob, pages, `${fname()} - falas - ${character.name.replace(/[\\/:*?"<>|]+/g, '')}`);
+    }
+    catch (err) {
+        console.error(err);
+        alert('Não foi possível gerar a folha de falas: ' + (err?.message ?? err));
+    }
+    finally {
+        btn.textContent = label;
+        btn.disabled = !selectedCharacter();
+    }
+});
 onShootingOrder(async () => {
     const btn = $('#fDoc'), label = btn.textContent;
     btn.disabled = true;

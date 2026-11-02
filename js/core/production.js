@@ -171,3 +171,31 @@ export function speakingCharacters(scene) {
     for (const b of sceneBlocks(scene)) if (b.kind === 'dialogue' && b.character) seen.add(b.character);
     return [...seen];
 }
+
+/* ───────── falas por personagem ───────── */
+
+/**
+ * Falas de cada personagem, agrupadas por cena, SEMPRE na ordem narrativa original do roteiro
+ * (os filtros de produção não se aplicam aqui). "MARIA", "MARIA (V.O.)" e "MARIA (CONT'D)" são o mesmo personagem.
+ * Rubricas (parentheticals) ficam de fora por enquanto: são uma melhoria futura opcional.
+ *
+ * @returns {Map<string, {name:string, speeches:number, scenes:Array<{scene:object,
+ *   speeches:Array<{label:string, parts:string[]}>}>}>}  Map ordenado alfabeticamente (pt-BR)
+ */
+export function characterSheets(scenes) {
+    const map = new Map();
+    for (const scene of scenes) {
+        for (const b of sceneBlocks(scene)) {
+            if (b.kind !== 'dialogue' || !b.character) continue;
+            const parts = b.lines.filter((l) => l.type === 'dialogue').map((l) => l.text);
+            if (!parts.length) continue;
+            let ch = map.get(b.character);
+            if (!ch) map.set(b.character, ch = { name: b.character, speeches: 0, scenes: [] });
+            let entry = ch.scenes.at(-1);
+            if (!entry || entry.scene !== scene) ch.scenes.push(entry = { scene, speeches: [] });
+            entry.speeches.push({ label: b.label, parts });
+            ch.speeches++;
+        }
+    }
+    return new Map([...map].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR')));
+}
