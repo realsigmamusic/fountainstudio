@@ -1,4 +1,4 @@
-const VERSAO = '1.12.0';
+const VERSAO = '1.13.0';
 const ARQUIVOS = [
   './',
   'css/app.css',
@@ -22,6 +22,7 @@ const ARQUIVOS = [
   'js/core/print.js',
   'js/core/token.js',
   'js/core/utils.js',
+  'js/core/layout.js',
   'js/editor.js',
   'js/main.js',
   'js/pdf-export.js',

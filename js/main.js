@@ -2,6 +2,7 @@ import { parse } from './core/parser.js';
 import { defaultConfig } from './core/config.js';
 import { createEditor, summarize, foldAll, unfoldAll } from './editor.js';
 import { kvGet, kvSet, listDocs, saveDoc, deleteDoc, newId } from './storage.js';
+import { pageStarts } from './core/layout.js';
 const $ = (s) => document.querySelector(s);
 const TEMPLATE = `Title: FOUNTAIN STUDIO
 Credit: escrito por
@@ -162,6 +163,29 @@ let ed;
 let summary = { lineClass: new Map(), headings: [], characters: [], locations: [], times: [] };
 let srcEls = [];
 let timer = 0, saveTimer = 0, folded = false, pdfUrl = '';
+/* marca no preview onde cada página começa no PDF */
+function markPageBreaks(root, starts) {
+    root.querySelectorAll('.pgbrk').forEach(n => n.remove());
+    for (const { line, page } of starts) {
+        let el = root.querySelector(`[id="sourceline_${line}"]`) || root.querySelector(`[data-position="${line}"]`);
+        if (!el)
+            continue;
+        let blk = el.closest('h3') || el;
+        const dual = blk.closest('.dual-dialogue');
+        if (dual)
+            blk = dual;
+        else
+            while (blk.parentElement !== root && blk.parentElement.matches('.dialogue') && blk === blk.parentElement.firstElementChild)
+                blk = blk.parentElement; // início de diálogo: a marca vai antes do bloco inteiro
+        const prev = blk.previousElementSibling;
+        if (prev && prev.tagName === 'HR')
+            prev.remove(); // quebra forçada (===): a marca substitui o <hr>
+        const m = document.createElement('span');
+        m.className = 'pgbrk';
+        m.dataset.page = String(page);
+        blk.before(m);
+    }
+}
 /* ───────── pipeline de atualização ───────── */
 function refresh() {
     const text = ed.getText();
@@ -171,6 +195,13 @@ function refresh() {
     const mp = $('#mainpage'); // mesmas classes do preview original: margens (innerpage) + números de cena
     mp.className = 'innerpage' + { left: ' numberonleft', right: ' numberonright', both: ' numberonleft numberonright' }[cfg.scenes_numbers];
     mp.innerHTML = parsed.scriptHtml;
+    try {
+        const pc = { ...cfg, print_dialogue_numbers: false };
+        markPageBreaks(mp, pageStarts(pc, parse(text, pc, false)));
+    }
+    catch (err) {
+        console.warn('Marcação de páginas indisponível:', err);
+    }
     const tp = $('#titlepage_container');
     if (parsed.titleHtml) {
         tp.style.display = 'block';
