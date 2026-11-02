@@ -139,3 +139,4 @@ dialog menu{display:flex;gap:8px;justify-content:flex-end;padding:0;margin:14px 
 #prodFilters select{font:inherit;color:var(--tx);background:var(--pn);border:1px solid var(--bd);border-radius:6px;padding:5px 6px;min-width:120px;max-width:200px}
 #prodFilters button:disabled{opacity:.45;cursor:default}
 #prodTable tr.grp th{position:static;background:var(--pn);color:var(--tx);font-size:13px;padding-top:12px;border-bottom:2px solid var(--bd)}
+#fDoc:disabled{opacity:.45;cursor:default}

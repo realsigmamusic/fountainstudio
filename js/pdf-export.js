@@ -21,3 +21,8 @@ export async function makePdf(text, cfg, highlighted) {
     const { data, stats } = await GeneratePdf('$PDF$', cfg, ec, parsed);
     return { blob: new Blob([data], { type: 'application/pdf' }), pages: stats.pagecountReal };
 }
+/** Garante que o pdfkit e as fontes estejam carregados (usado também pelos documentos de produção). */
+export async function loadPdfEngine() {
+    await loadScript('js/vendor/pdfkit.standalone.js');
+    await loadFonts();
+}

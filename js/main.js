@@ -4,7 +4,8 @@ import { createEditor, summarize, foldAll, unfoldAll } from './editor.js';
 import { kvGet, kvSet, listDocs, saveDoc, deleteDoc, newId } from './storage.js';
 import { pageStarts } from './core/layout.js';
 import { extractScenes } from './core/production.js';
-import { renderProduction } from './production-ui.js';
+const ENV_LABEL_SHORT = { int: 'INT', ext: 'EXT', mixed: 'INT-EXT', other: '' };
+import { renderProduction, visibleScenes, currentFilters, onShootingOrder } from './production-ui.js';
 const $ = (s) => document.querySelector(s);
 const TEMPLATE = `Title: FOUNTAIN STUDIO
 Credit: escrito por
@@ -364,6 +365,28 @@ function goToScene(line) {
     ed.goToLine(line);
 }
 $('#bProd').onclick = toggleProduction;
+onShootingOrder(async () => {
+    const btn = $('#fDoc'), label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Gerando…';
+    await new Promise(r => setTimeout(r, 30));
+    try {
+        refresh(); // garante que as cenas correspondem ao texto atual
+        const { makeShootingOrder } = await import('./production-pdf.js'); // pdfkit só é baixado quando necessário
+        const filters = currentFilters();
+        const { blob, pages } = await makeShootingOrder({ scenes: visibleScenes(), filters, docName: doc.name });
+        const tag = [filters.location, filters.env && ENV_LABEL_SHORT[filters.env], filters.period].filter(Boolean).join(' ');
+        showPdf(blob, pages, `${fname()} - ordem de filmagem${tag ? ' - ' + tag.replace(/[\\/:*?"<>|]+/g, '') : ''}`);
+    }
+    catch (err) {
+        console.error(err);
+        alert('Não foi possível gerar o documento: ' + (err?.message ?? err));
+    }
+    finally {
+        btn.textContent = label;
+        btn.disabled = false;
+    }
+});
 document.querySelectorAll('#tabs [data-v]').forEach(b => b.onclick = () => setView(b.dataset.v));
 $('#bFold').onclick = () => { folded ? unfoldAll(ed.view) : foldAll(ed.view); folded = !folded; };
 /* ───────── documentos ───────── */
@@ -580,7 +603,9 @@ async function renderPdfPages(url) {
     }
 }
 
-function showPdf(blob, pages) {
+let pdfName = null; // nome do download quando não é o PDF do roteiro
+function showPdf(blob, pages, name = null) {
+    pdfName = name;
     if (pdfUrl)
         URL.revokeObjectURL(pdfUrl);
     pdfUrl = URL.createObjectURL(blob);
@@ -608,7 +633,7 @@ $('#pdfClose').onclick = () => {
     pdfObs?.disconnect();
     $('#pdfpages').textContent = '';
 };
-$('#pdfDl').onclick = async () => { const b = await (await fetch(pdfUrl)).blob(); saveFile(b, fname() + '.pdf', { description: 'PDF', accept: { 'application/pdf': ['.pdf'] } }); };
+$('#pdfDl').onclick = async () => { const b = await (await fetch(pdfUrl)).blob(); saveFile(b, (pdfName ?? fname()) + '.pdf', { description: 'PDF', accept: { 'application/pdf': ['.pdf'] } }); };
 /* ───────── inicialização ───────── */
 (async function init() {
     // Service worker: faz o app funcionar offline e ser instalável (veja sw.js)

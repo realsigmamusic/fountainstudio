@@ -49,6 +49,7 @@ export function renderProduction(scenes, onGoto) {
     const filtered = filterScenes(scenes, state);
     const active = state.env || state.location || state.period;
     $('#fClear').disabled = !active;
+    $('#fDoc').disabled = !filtered.length;
 
     $('#prodCount').textContent = active && scenes.length
         ? `${plural(filtered.length, 'cena', 'cenas')} de ${scenes.length}`
@@ -97,3 +98,7 @@ $('#fClear').onclick = () => { state.env = state.location = state.period = ALL; 
 
 /** Cenas atualmente visíveis (com os filtros aplicados) — usado pelos documentos de produção. */
 export const visibleScenes = () => filterScenes(lastScenes, state);
+
+/** Filtros ativos (cópia) e callback do botão que gera a ordem de filmagem. */
+export const currentFilters = () => ({ env: state.env, location: state.location, period: state.period });
+export const onShootingOrder = (fn) => { $('#fDoc').onclick = fn; };

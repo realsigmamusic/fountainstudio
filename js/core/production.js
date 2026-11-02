@@ -62,6 +62,7 @@ export function extractScenes(parsed) {
             index: scenes.length,
             number: String(t.number ?? scenes.length + 1), // numeração original (inclui "1A", "12B"...)
             heading,
+            original: String(t.text ?? '').trim(), // cabeçalho como o parser o entregou (sem normalizar)
             ...parseHeading(heading),
             line: t.line,
             tokenStart: i,
@@ -69,6 +70,8 @@ export function extractScenes(parsed) {
         });
     }
     for (let k = 0; k < scenes.length - 1; k++) scenes[k].tokenEnd = scenes[k + 1].tokenStart;
+    // referência (somente leitura) aos tokens de cada cena; nada é copiado nem alterado
+    for (const sc of scenes) sc.tokens = tokens.slice(sc.tokenStart, sc.tokenEnd);
     return scenes;
 }
 
@@ -124,4 +127,47 @@ export function groupByLocation(scenes) {
         groups.get(sc.location).push(sc);
     }
     return [...groups].map(([location, list]) => ({ location, scenes: list }));
+}
+
+/* ───────── conteúdo da cena (lido dos tokens do parser) ───────── */
+
+const SKIP = new Set(['separator', 'section', 'page_break', 'dual_dialogue_begin', 'dual_dialogue_end', 'dialogue_begin', 'dialogue_end']);
+
+/** Nome canônico do personagem: sem extensão "(V.O.)", sem "@" de personagem forçado e sem "^" de diálogo duplo. */
+export function characterName(text) {
+    return String(text ?? '').replace(/\(.*\)/, '').replace(/^\s*@/, '').replace(/\^/g, '').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Converte os tokens de uma cena em blocos simples, na ordem do roteiro:
+ *  { kind:'action'|'transition'|'centered', text }
+ *  { kind:'dialogue', character, label, lines:[{type:'parenthetical'|'dialogue', text}] }
+ * `label` é o texto do personagem como escrito (ex.: "MARIA (V.O.)"); `character` é o nome canônico.
+ * Diálogos duplos viram blocos em sequência. Tokens ignorados pelo parser (ignore) são descartados.
+ */
+export function sceneBlocks(scene) {
+    const blocks = [];
+    let cur = null;
+    for (const t of scene.tokens ?? []) {
+        if (t.ignore || t.type === 'scene_heading' || SKIP.has(t.type)) continue;
+        const text = String(t.text ?? '').trim();
+        if (t.type === 'character') {
+            cur = { kind: 'dialogue', character: characterName(text), label: text.replace(/^@/, '').replace(/\s*\^\s*$/, '').trim(), lines: [] };
+            blocks.push(cur);
+        } else if (t.type === 'parenthetical' || t.type === 'dialogue') {
+            if (!cur || !text) continue;
+            cur.lines.push({ type: t.type, text });
+        } else if (t.type === 'action' || t.type === 'transition' || t.type === 'centered') {
+            cur = null;
+            if (text) blocks.push({ kind: t.type, text });
+        }
+    }
+    return blocks;
+}
+
+/** Personagens com fala na cena, na ordem em que falam pela primeira vez. */
+export function speakingCharacters(scene) {
+    const seen = new Set();
+    for (const b of sceneBlocks(scene)) if (b.kind === 'dialogue' && b.character) seen.add(b.character);
+    return [...seen];
 }
