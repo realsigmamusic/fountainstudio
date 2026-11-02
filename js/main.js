@@ -3,6 +3,8 @@ import { defaultConfig } from './core/config.js';
 import { createEditor, summarize, foldAll, unfoldAll } from './editor.js';
 import { kvGet, kvSet, listDocs, saveDoc, deleteDoc, newId } from './storage.js';
 import { pageStarts } from './core/layout.js';
+import { extractScenes } from './core/production.js';
+import { renderProduction } from './production-ui.js';
 const $ = (s) => document.querySelector(s);
 const TEMPLATE = `Title: FOUNTAIN STUDIO
 Credit: escrito por
@@ -162,6 +164,8 @@ let cfg = { ...defaultConfig };
 let ed;
 let summary = { lineClass: new Map(), headings: [], characters: [], locations: [], times: [] };
 let srcEls = [];
+let scenes = []; // dados de produção (derivados do parser; não alteram o roteiro)
+let prevView = 'edit';
 let timer = 0, saveTimer = 0, folded = false, pdfUrl = '';
 /* acha o início da n-ésima palavra (a partir de 0) dentro de um elemento */
 function wordStart(el, n) {
@@ -221,6 +225,9 @@ function refresh() {
     const text = ed.getText();
     const parsed = parse(text, { ...cfg, print_dialogue_numbers: false }, true);
     summary = summarize(parsed);
+    scenes = extractScenes(parsed);
+    if (document.body.dataset.v === 'production')
+        renderProduction(scenes, goToScene);
     ed.setSummary(summary);
     const mp = $('#mainpage'); // mesmas classes do preview original: margens (innerpage) + números de cena
     mp.className = 'innerpage' + { left: ' numberonleft', right: ' numberonright', both: ' numberonleft numberonright' }[cfg.scenes_numbers];
@@ -339,7 +346,24 @@ $('#outlineTree').addEventListener('click', e => {
 function setView(v) {
     document.body.dataset.v = v;
     document.querySelectorAll('#tabs [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+    $('#bProd').classList.toggle('on', v === 'production');
+    $('#bProd').textContent = v === 'production' ? '← Roteiro' : 'Produção';
 }
+/* aba de produção: alterna com o roteiro; ao voltar, retorna à vista em que o usuário estava */
+function toggleProduction() {
+    if (document.body.dataset.v === 'production') {
+        setView(prevView);
+        return;
+    }
+    prevView = document.body.dataset.v;
+    renderProduction(scenes, goToScene);
+    setView('production');
+}
+function goToScene(line) {
+    setView('edit');
+    ed.goToLine(line);
+}
+$('#bProd').onclick = toggleProduction;
 document.querySelectorAll('#tabs [data-v]').forEach(b => b.onclick = () => setView(b.dataset.v));
 $('#bFold').onclick = () => { folded ? unfoldAll(ed.view) : foldAll(ed.view); folded = !folded; };
 /* ───────── documentos ───────── */

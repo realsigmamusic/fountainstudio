@@ -20,6 +20,7 @@
     <button data-v="outline">Outline</button><button data-v="edit" class="on">Editar</button><button data-v="preview">Preview</button>
   </nav>
   <button id="bFold" title="Dobrar/desdobrar todas as cenas">⇕ Cenas</button>
+  <button id="bProd" title="Planejamento de produção">Produção</button>
   <button id="bOpen">Abrir</button><button id="bSave">Salvar</button>
   <button id="bPdf" class="primary">PDF</button>
   <input type="file" id="file" hidden>
@@ -32,6 +33,10 @@
     </div>
     <div id="outlineTree"></div>
   </aside>
+  <section id="production" class="pane" aria-label="Produção">
+    <div id="prodHead"><strong id="prodCount"></strong></div>
+    <div id="prodTable"></div>
+  </section>
   <section id="edwrap" class="pane"><div id="editor"></div></section>
   <section id="prevwrap" class="pane">
     <div id="pdfbar" hidden><span id="pdfinfo"></span><button id="pdfDl">Baixar</button><button id="pdfClose">Fechar PDF</button></div>

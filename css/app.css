@@ -18,7 +18,7 @@ button.on,button.primary{background:var(--ac);color:#fff;border-color:var(--ac)}
 #tabs{display:flex;gap:4px}
 main{flex:1;min-height:0;display:grid}
 .pane{display:none;min-height:0;overflow:auto}
-body[data-v=outline] #outline,body[data-v=edit] #edwrap,body[data-v=preview] #prevwrap{display:block}
+body[data-v=outline] #outline,body[data-v=edit] #edwrap,body[data-v=preview] #prevwrap,body[data-v=production] #production{display:block}
 #tabs{display:flex}
 #edwrap{background:var(--pn)}
 #editor,.cm-editor{height:100%}
@@ -70,6 +70,9 @@ dialog menu{display:flex;gap:8px;justify-content:flex-end;padding:0;margin:14px 
   main{grid-template-columns:260px 1fr 1fr}
   #tabs{display:none}
   #outline,#edwrap,#prevwrap{display:block}
+  /* modo Produção: ocupa a tela toda, no lugar das três colunas */
+  body[data-v=production] main{grid-template-columns:1fr}
+  body[data-v=production] #outline,body[data-v=production] #edwrap,body[data-v=production] #prevwrap{display:none}
 }
 
 #workspace #script .page{background-color:#fff!important}
@@ -117,3 +120,16 @@ dialog menu{display:flex;gap:8px;justify-content:flex-end;padding:0;margin:14px 
 #workspace .pgbrk{display:block;position:relative;height:0;margin:22px 0;border-top:2px dashed #b9b4aa;pointer-events:none;clear:both;width:100%}
 #workspace .pgbrk::after{content:"pág. " attr(data-page);position:absolute;right:0;top:-9px;padding:0 6px;background:#fff;color:#8a857b;font:600 11px/1 system-ui,sans-serif}
 #workspace hr{border:0;border-top:2px dashed #b9b4aa;margin:22px 0}
+
+/* ───────── aba de produção ───────── */
+#production{padding:12px;max-width:980px;width:100%;margin:0 auto}
+#prodHead{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+#prodTable{overflow-x:auto}
+#prodTable table{width:100%;border-collapse:collapse;font-size:13px}
+#prodTable th,#prodTable td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}
+#prodTable th{color:var(--mu);font-weight:600;font-size:12px;position:sticky;top:0;background:var(--bg)}
+#prodTable td.num{font-weight:700;font-variant-numeric:tabular-nums}
+#prodTable tbody tr{cursor:pointer}#prodTable tbody tr:hover{background:var(--pn)}
+#prodTable td.loc{white-space:normal;min-width:140px}
+.prodEmpty{color:var(--mu);padding:24px 0}
+#bProd.on{background:var(--ac);color:#fff;border-color:var(--ac)}
