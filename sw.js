@@ -1,12 +1,4 @@
-// Service worker: permite usar o app offline e instalá-lo.
-//
-// Estratégia: "rede primeiro". Se estiver online, sempre pega a versão mais nova do arquivo
-// (assim as suas edições aparecem na hora, sem truques); se estiver offline, usa a cópia guardada.
-//
-// Se você criar um arquivo novo no projeto, acrescente o caminho dele na lista ARQUIVOS abaixo.
-// Se mudar a lista, aumente o número em VERSAO para o navegador atualizar o cache.
-
-const VERSAO = 'v1';
+const VERSAO = '1.12.0';
 const ARQUIVOS = [
   './',
   'css/app.css',
@@ -42,6 +34,8 @@ const ARQUIVOS = [
   'js/vendor/textbox/lineWrapper.js',
   'js/vendor/textbox/pdfTextbox.js',
   'js/vendor/textbox/textMeasurement.js',
+  'js/vendor/pdfjs/pdf.min.mjs',
+  'js/vendor/pdfjs/pdf.worker.min.mjs',
   'manifest.webmanifest',
   'noisetexture.png'
 ];
