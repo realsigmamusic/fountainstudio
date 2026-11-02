@@ -1,4 +1,4 @@
-import { ENV_LABEL, ALL, filterScenes, facets, groupByLocation, characterSheets, productionCast } from './core/production.js';
+import { ENV_LABEL, ALL, filterScenes, facets, groupByLocation, characterSheets, productionCast, summarizeProduction } from './core/production.js';
 
 /* Estado da aba (só vive na tela; não vai para o arquivo Fountain). Sobrevive às re-renderizações. */
 const state = { env: ALL, location: ALL, period: ALL, group: false, character: '' };
@@ -39,6 +39,79 @@ function castCell(td, c) {
     for (const n of c.silent) add(n.name + (n.known ? '' : '?'), 'cn', n.known ? 'Sem fala nesta cena' : 'Sem fala: nome em maiúsculas na ação, mas não fala em nenhuma cena (confira)');
 }
 
+/* ───────── resumo geral (painel; calculado sobre o roteiro inteiro) ───────── */
+function bars(title, rows, label, key, max) {
+    const box = document.createElement('div');
+    box.className = 'sumCard';
+    const h = document.createElement('h4');
+    h.textContent = title;
+    box.append(h);
+    for (const r of rows) {
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'sumRow' + (state[key] === r.key ? ' on' : '');
+        row.title = `Filtrar a tabela: ${label(r.key)}`;
+        const name = Object.assign(document.createElement('span'), { className: 'n', textContent: label(r.key) });
+        const bar = document.createElement('span');
+        bar.className = 'bar';
+        const fill = document.createElement('i');
+        fill.style.width = `${Math.max(4, (r.count / max) * 100)}%`;
+        bar.append(fill);
+        const num = Object.assign(document.createElement('span'), { className: 'c', textContent: r.count });
+        row.append(name, bar, num);
+        row.onclick = () => { state[key] = state[key] === r.key ? ALL : r.key; renderProduction(lastScenes, lastGoto); };
+        box.append(row);
+    }
+    return box;
+}
+
+function renderSummary(scenes) {
+    const body = $('#sumBody');
+    body.textContent = '';
+    if (!scenes.length) { body.append(Object.assign(document.createElement('div'), { className: 'prodEmpty', textContent: 'Sem cenas para resumir.' })); return; }
+    const sum = summarizeProduction(scenes, cast);
+    const max = Math.max(...sum.env.map((r) => r.count), ...sum.period.map((r) => r.count), ...sum.location.map((r) => r.count));
+
+    const total = document.createElement('div');
+    total.className = 'sumCard sumTotal';
+    total.append(Object.assign(document.createElement('strong'), { textContent: sum.total }),
+        document.createTextNode(sum.total === 1 ? ' cena' : ' cenas'),
+        Object.assign(document.createElement('small'), { textContent: `${plural(sum.location.length, 'locação', 'locações')} · ${plural(sum.characters.length, 'personagem', 'personagens')}` }));
+
+    const grid = document.createElement('div');
+    grid.className = 'sumGrid';
+    grid.append(
+        total,
+        bars('Interior / exterior', sum.env, (k) => ENV_LABEL[k], 'env', max),
+        bars('Período', sum.period, (k) => (k === '—' ? 'sem período' : k), 'period', max),
+        bars('Cenas por locação', sum.location, (k) => k || '(sem locação)', 'location', max),
+    );
+
+    const chars = document.createElement('div');
+    chars.className = 'sumCard sumChars';
+    chars.append(Object.assign(document.createElement('h4'), { textContent: 'Personagens' }));
+    if (!sum.characters.length) chars.append(Object.assign(document.createElement('div'), { className: 'prodEmpty', textContent: 'Nenhum personagem identificado.' }));
+    else {
+        const t = document.createElement('table');
+        const hr = t.createTHead().insertRow();
+        for (const h of ['Nome', 'Cenas com fala', 'Cenas sem fala'])
+            hr.append(Object.assign(document.createElement('th'), { textContent: h }));
+        const tb = t.createTBody();
+        for (const c of sum.characters) {
+            const tr = tb.insertRow();
+            tr.insertCell().textContent = c.name + (c.guess ? '?' : '');
+            tr.cells[0].title = c.guess ? 'Nome em maiúsculas na ação que não fala em nenhuma cena (confira)' : '';
+            tr.insertCell().textContent = c.speaking || '—';
+            tr.insertCell().textContent = c.silent || '—';
+        }
+        const wrap = document.createElement('div');
+        wrap.className = 'sumScroll';
+        wrap.append(t);
+        chars.append(wrap);
+    }
+    body.append(grid, chars);
+}
+
 function sceneRow(body, sc) {
     const tr = body.insertRow();
     tr.title = sc.heading;
@@ -70,6 +143,7 @@ export function renderProduction(scenes, onGoto) {
     /* personagens com fala (sempre sobre o roteiro inteiro, na ordem original) */
     sheets = characterSheets(scenes);
     cast = productionCast(scenes);
+    renderSummary(scenes);
     if (!sheets.has(state.character)) state.character = '';
     const csel = $('#cSel');
     csel.textContent = '';

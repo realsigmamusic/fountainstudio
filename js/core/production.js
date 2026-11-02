@@ -284,3 +284,36 @@ export function productionCast(scenes) {
     const known = knownCharacters(scenes);
     return scenes.map((sc) => sceneCast(sc, known));
 }
+
+/* ───────── resumo geral da produção ───────── */
+
+/**
+ * Números gerais do roteiro inteiro (não dependem dos filtros).
+ * @param cast resultado de productionCast(scenes)
+ * @returns {{total:number, env:Array, period:Array, location:Array, characters:Array}}
+ *   env/period/location: [{key, count}] — location e period por nº de cenas (maior primeiro), env na ordem INT., EXT., INT./EXT., Outro;
+ *   characters: [{name, speaking, silent, guess}] — nº de cenas com fala e sem fala; guess=true se só aparece como candidato "?"
+ */
+export function summarizeProduction(scenes, cast) {
+    const tally = (pick) => {
+        const m = new Map();
+        for (const sc of scenes) { const k = pick(sc); m.set(k, (m.get(k) ?? 0) + 1); }
+        return m;
+    };
+    const byCount = (m) => [...m].map(([key, count]) => ({ key, count }))
+        .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key, 'pt-BR'));
+    const env = tally((s) => s.env);
+    const chars = new Map();
+    const get = (name) => chars.get(name) ?? chars.set(name, { name, speaking: 0, silent: 0, guess: true }).get(name);
+    for (const c of cast) {
+        for (const n of c.speaking) { const x = get(n); x.speaking++; x.guess = false; }
+        for (const n of c.silent) { const x = get(n.name); x.silent++; if (n.known) x.guess = false; }
+    }
+    return {
+        total: scenes.length,
+        env: ['int', 'ext', 'mixed', 'other'].filter((k) => env.has(k)).map((key) => ({ key, count: env.get(key) })),
+        period: byCount(tally(periodKey)),
+        location: byCount(tally((s) => s.location)),
+        characters: [...chars.values()].sort((a, b) => (b.speaking + b.silent) - (a.speaking + a.silent) || a.name.localeCompare(b.name, 'pt-BR')),
+    };
+}
