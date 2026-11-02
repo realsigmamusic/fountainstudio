@@ -71,3 +71,57 @@ export function extractScenes(parsed) {
     for (let k = 0; k < scenes.length - 1; k++) scenes[k].tokenEnd = scenes[k + 1].tokenStart;
     return scenes;
 }
+
+/* ───────── filtros e agrupamentos ─────────
+ * Funções puras: devolvem novas listas e nunca alteram `scenes` (a ordem do roteiro é preservada;
+ * dentro de qualquer filtro ou grupo as cenas continuam na ordem narrativa original). */
+
+export const ALL = '';              // valor "sem filtro"
+export const NO_PERIOD = '—';       // rótulo para cenas sem período no cabeçalho
+
+const periodKey = (sc) => sc.period || NO_PERIOD;
+
+/** Aplica filtros combinados (E lógico). Campo vazio/ausente = não filtra. */
+export function filterScenes(scenes, { env = ALL, location = ALL, period = ALL } = {}) {
+    return scenes.filter((sc) =>
+        (!env || sc.env === env) &&
+        (!location || sc.location === location) &&
+        (!period || periodKey(sc) === period));
+}
+
+/**
+ * Valores disponíveis para cada filtro, com a contagem de cenas.
+ * Cada faceta é calculada aplicando os OUTROS filtros, assim as opções
+ * mostradas sempre levam a pelo menos uma cena (sem combinações vazias).
+ */
+export function facets(scenes, filters = {}) {
+    const count = (key, pick) => {
+        const others = { ...filters, [key]: ALL };
+        const map = new Map();
+        for (const sc of filterScenes(scenes, others)) {
+            const v = pick(sc);
+            map.set(v, (map.get(v) ?? 0) + 1);
+        }
+        return map;
+    };
+    const sorted = (map) => [...map].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
+    return {
+        env: count('env', (s) => s.env),
+        location: sorted(count('location', (s) => s.location)),
+        period: sorted(count('period', periodKey)),
+    };
+}
+
+/**
+ * Agrupa por localização (e, dentro dela, por período), na ordem de primeira
+ * aparição no roteiro. Ex.: todas as cenas de "SALA" juntas, DAY antes de NIGHT
+ * conforme aparecem. Resultado: [{ location, scenes:[...] }].
+ */
+export function groupByLocation(scenes) {
+    const groups = new Map();
+    for (const sc of scenes) {
+        if (!groups.has(sc.location)) groups.set(sc.location, []);
+        groups.get(sc.location).push(sc);
+    }
+    return [...groups].map(([location, list]) => ({ location, scenes: list }));
+}

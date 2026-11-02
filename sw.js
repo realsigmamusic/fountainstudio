@@ -1,4 +1,4 @@
-const VERSAO = '1.14.0';
+const VERSAO = '1.15.0';
 const ARQUIVOS = [
   './',
   'css/app.css',
