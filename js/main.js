@@ -376,11 +376,11 @@ onCharacterSheet(async () => {
         if (!character) return;
         const { makeCharacterSheet } = await import('./production-pdf.js');
         const { blob, pages } = await makeCharacterSheet({ character, docName: doc.name });
-        showPdf(blob, pages, `${fname()} - falas - ${character.name.replace(/[\\/:*?"<>|]+/g, '')}`);
+        showPdf(blob, pages, `${fname()} - personagem - ${character.name.replace(/[\\/:*?"<>|]+/g, '')}`);
     }
     catch (err) {
         console.error(err);
-        alert('Não foi possível gerar a folha de falas: ' + (err?.message ?? err));
+        alert('Não foi possível gerar a folha do personagem: ' + (err?.message ?? err));
     }
     finally {
         btn.textContent = label;

@@ -141,8 +141,8 @@ export function renderProduction(scenes, onGoto) {
     const filtered = filterScenes(scenes, state);
 
     /* personagens com fala (sempre sobre o roteiro inteiro, na ordem original) */
-    sheets = characterSheets(scenes);
     cast = productionCast(scenes);
+    sheets = characterSheets(scenes, cast);
     renderSummary(scenes);
     if (!sheets.has(state.character)) state.character = '';
     const csel = $('#cSel');
@@ -207,7 +207,7 @@ export const visibleScenes = () => filterScenes(lastScenes, state);
 export const currentFilters = () => ({ env: state.env, location: state.location, period: state.period });
 export const onShootingOrder = (fn) => { $('#fDoc').onclick = fn; };
 
-/** Folha de falas do personagem escolhido (ou null) e callback do botão. */
+/** Folha do personagem escolhido (ou null) e callback do botão. */
 export const selectedCharacter = () => sheets.get(state.character) ?? null;
 export const onCharacterSheet = (fn) => { $('#cDoc').onclick = fn; };
 $('#cSel').onchange = (e) => { state.character = e.target.value; $('#cDoc').disabled = !state.character; };

@@ -222,14 +222,14 @@ export async function makeShootingOrder({ scenes, filters, docName, castOf }) {
     return { blob: await doc.done, pages };
 }
 
-/* ───────── folha individual de falas ───────── */
+/* ───────── folha individual do personagem ───────── */
 
 const extensionOf = (label) => (label.match(/\(.*\)/) ?? [''])[0];
 
 /**
- * Folha de falas de um personagem, para o ator.
- * @param character item de characterSheets(); as cenas já vêm na ordem narrativa original.
+ * Folha de um personagem, para o ator: todas as cenas em que ele participa, na ordem narrativa original.
  * Cada cena traz o número e o cabeçalho originais; só as falas do personagem são impressas.
+ * Cenas em que ele está presente mas não fala aparecem marcadas como "sem fala".
  */
 export async function makeCharacterSheet({ character, docName }) {
     const doc = await newDoc();
@@ -239,17 +239,23 @@ export async function makeCharacterSheet({ character, docName }) {
     const SP = 12, X = PAGE.left + 14, W = COL.w - 14;
 
     /* título: nome do personagem em destaque */
-    doc.font('N').fontSize(9).fillColor(GRAY).text('FOLHA DE FALAS', PAGE.left, PAGE.top, { characterSpacing: 2 });
+    doc.font('N').fontSize(9).fillColor(GRAY).text('FOLHA DO PERSONAGEM', PAGE.left, PAGE.top, { characterSpacing: 2 });
     doc.font('B').fontSize(28).fillColor('#000').text(character.name, { width: COL.w });
     doc.moveDown(0.2).font('N').fontSize(10).fillColor(GRAY)
         .text(`${docName || 'Roteiro'}`, { width: COL.w });
-    doc.text(`${plural(character.speeches, 'fala', 'falas')} · ${plural(character.scenes.length, 'cena', 'cenas')}  —  cenas: ${character.scenes.map((e) => e.scene.number).join(', ')}`, { width: COL.w });
+    const mute = character.scenes.filter((e) => !e.speeches.length).length;
+    doc.text(`${plural(character.speeches, 'fala', 'falas')} · ${plural(character.scenes.length, 'cena', 'cenas')}${mute ? ` (${mute} sem fala)` : ''}`, { width: COL.w });
+    doc.text(`Cenas: ${character.scenes.map((e) => e.scene.number + (e.speeches.length ? '' : '*')).join(', ')}${mute ? '   (* = presente, sem fala)' : ''}`, { width: COL.w });
     doc.moveDown(0.8).fillColor('#000');
 
     for (const { scene, speeches } of character.scenes) {
         curScene = scene.number;
         sceneBand(doc, scene, { keep: 60 });
         if (!pageScenes.at(-1).includes(scene.number)) pageScenes.at(-1).push(scene.number);
+        if (!speeches.length) {
+            doc.font('I').fontSize(10).fillColor(GRAY).text('Presente nesta cena, sem fala.', X, doc.y, { width: W });
+            doc.fillColor('#000').moveDown(0.6);
+        }
         for (const sp of speeches) {
             const ext = extensionOf(sp.label);
             const h = sp.parts.reduce((n, t) => n + textHeight(doc, t, W, SP) + 4, ext ? 12 : 0);
@@ -269,7 +275,7 @@ export async function makeCharacterSheet({ character, docName }) {
 
     const title = (docName || 'Roteiro').toUpperCase();
     const { pages } = finishDoc(doc, {
-        headerFor: (i) => `${title}  ·  FALAS DE ${character.name}${pageScenes[i].length ? '  ·  ' + (pageScenes[i].length > 1 ? 'CENAS ' : 'CENA ') + pageScenes[i].join(', ') : ''}`,
+        headerFor: (i) => `${title}  ·  PERSONAGEM ${character.name}${pageScenes[i].length ? '  ·  ' + (pageScenes[i].length > 1 ? 'CENAS ' : 'CENA ') + pageScenes[i].join(', ') : ''}`,
         footerLeft: `Fountain Studio · gerado em ${new Date().toLocaleDateString('pt-BR')}`,
     });
     return { blob: await doc.done, pages };

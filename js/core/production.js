@@ -172,32 +172,44 @@ export function speakingCharacters(scene) {
     return [...seen];
 }
 
-/* ───────── falas por personagem ───────── */
+/* ───────── folha por personagem ───────── */
 
 /**
- * Falas de cada personagem, agrupadas por cena, SEMPRE na ordem narrativa original do roteiro
- * (os filtros de produção não se aplicam aqui). "MARIA", "MARIA (V.O.)" e "MARIA (CONT'D)" são o mesmo personagem.
- * Rubricas (parentheticals) ficam de fora por enquanto: são uma melhoria futura opcional.
+ * Cenas de cada personagem que fala em algum ponto do roteiro, SEMPRE na ordem narrativa original
+ * (os filtros de produção não se aplicam aqui). Cada cena traz as falas dele e, quando ele só aparece
+ * na ação, vem com `speeches: []` (presente, sem fala) — o ator precisa saber que deve estar lá.
+ * "MARIA", "MARIA (V.O.)" e "MARIA (CONT'D)" são o mesmo personagem. Rubricas ficam de fora por enquanto.
  *
+ * @param cast resultado de productionCast(scenes) (alinhado com `scenes`)
  * @returns {Map<string, {name:string, speeches:number, scenes:Array<{scene:object,
- *   speeches:Array<{label:string, parts:string[]}>}>}>}  Map ordenado alfabeticamente (pt-BR)
+ *   speeches:Array<{label:string, parts:string[]}>}>}>}  ordenado alfabeticamente (pt-BR)
  */
-export function characterSheets(scenes) {
-    const map = new Map();
-    for (const scene of scenes) {
+export function characterSheets(scenes, cast) {
+    const map = new Map(); // chave em MAIÚSCULAS
+    const get = (name) => {
+        const key = name.toUpperCase();
+        if (!map.has(key)) map.set(key, { name, speeches: 0, scenes: [] });
+        return map.get(key);
+    };
+    const entryOf = (ch, scene) => {
+        let e = ch.scenes.at(-1);
+        if (!e || e.scene !== scene) ch.scenes.push(e = { scene, speeches: [] });
+        return e;
+    };
+    scenes.forEach((scene, i) => {
         for (const b of sceneBlocks(scene)) {
             if (b.kind !== 'dialogue' || !b.character) continue;
             const parts = b.lines.filter((l) => l.type === 'dialogue').map((l) => l.text);
             if (!parts.length) continue;
-            let ch = map.get(b.character);
-            if (!ch) map.set(b.character, ch = { name: b.character, speeches: 0, scenes: [] });
-            let entry = ch.scenes.at(-1);
-            if (!entry || entry.scene !== scene) ch.scenes.push(entry = { scene, speeches: [] });
-            entry.speeches.push({ label: b.label, parts });
+            const ch = get(b.character);
+            entryOf(ch, scene).speeches.push({ label: b.label, parts });
             ch.speeches++;
         }
-    }
-    return new Map([...map].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR')));
+        /* presente na ação, sem fala nesta cena (só personagens reconhecidos: falam em outro ponto do roteiro) */
+        for (const n of cast?.[i]?.silent ?? []) if (n.known) entryOf(get(n.name), scene);
+    });
+    for (const [key, ch] of map) if (!ch.speeches) map.delete(key); // nunca fala: não é folha
+    return new Map([...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')).map((c) => [c.name, c]));
 }
 
 /* ───────── personagens com e sem fala ─────────
