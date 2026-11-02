@@ -117,8 +117,8 @@ dialog menu{display:flex;gap:8px;justify-content:flex-end;padding:0;margin:14px 
 @media(max-width:600px){#prevwrap{padding:6px}}
 
 /* marcação de quebra de página no preview */
-#workspace .pgbrk{display:block;position:relative;height:0;margin:22px 0;border-top:2px dashed #b9b4aa;pointer-events:none;clear:both;width:100%}
-#workspace .pgbrk::after{content:"pág. " attr(data-page);position:absolute;right:0;top:-9px;padding:0 6px;background:#fff;color:#8a857b;font:600 11px/1 system-ui,sans-serif}
+#workspace .pgbrk{display:block;position:relative;height:0;margin:22px 0;border-top:2px double red;pointer-events:none;clear:both;width:100%}
+#workspace .pgbrk::after{content:"pág. " attr(data-page);position:absolute;right:0;top:-9px;padding:0 6px;background:#fff;color:red;font:600 11px/1 system-ui,sans-serif}
 #workspace hr{border:0;border-top:2px dashed #b9b4aa;margin:22px 0}
 
 /* ───────── aba de produção ───────── */
