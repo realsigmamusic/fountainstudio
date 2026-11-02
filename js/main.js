@@ -19,31 +19,31 @@ Copyright: 2026 Todos os direitos reservados.
 
 > FADE IN:
 
-INT. SALA - DAY #1#
+INT. SALA - DIA #1#
 
 O objetivo dessa cena é apresentar o primeiro personagem da nossa história fictícia.
 
 FULANO
 Olá isso aqui é apenas um diálogo.
 
-INT. SALA - DAY #2#
+INT. SALA - DIA #2#
 
 FULANO está sentado no sofá, assistindo à televisão.
 
 FULANO
 Vou pegar um copo de água.
 
-INT. COZINHA - DAY #3#
+INT. COZINHA - DIA #3#
 
 FULANO entra na cozinha e abre a geladeira.
 
 Ele pega uma garrafa de água e enche um copo.
 
-INT. SALA - DAY #4#
+INT. SALA - DIA #4#
 
 FULANO volta à sala e se senta no sofá. o objetivo dessas ultimas cenas é testar cenas em continuidade mas em cenarios diferentes.
 
-EXT. QUINTAL - DAY #5#
+EXT. QUINTAL - DIA #5#
 
 O objetivo dessa cena é ver se o personagem FULANO vai ser reconhecido como um personagem que fala.
 
@@ -53,7 +53,7 @@ Fale alguma coisa Fulano.
 
 FULANO caminha até a porta [[ele hesita antes de abrir]] e sai.
 
-INT. SALA - NIGHT #6#
+INT. SALA - NOITE #6#
 
 FULANO está está dormindo sentado com a televisão ligada
 
@@ -66,7 +66,7 @@ FADE TO:
 # ATO II
 = Sinopse do segundo ato
 
-INT. COZINHA - NIGHT #7#
+INT. COZINHA - NOITE #7#
 
 Agora o objetivo é testar o diálogo duplo.
 
@@ -76,7 +76,7 @@ Preciso de falar uma coisa!
 SICRANO ^
 Preciso confessar uma coisa!
 
-INT. QUARTO - NIGHT #8#
+INT. QUARTO - NOITE #8#
 
 DEUTRANO está deitado ouvindo música. É mais uma personagem sem diálogo, mas ainda assim ela faz parte da cena.
 
@@ -91,13 +91,13 @@ Apenas um teste para para usar o recurso de voice over (V.O.)
 
 Agora vamos testar tratamento para caracteres especiais usando a barra invertida para \\* # @ ou \\_ por exemplo.
 
-INT. SALA - NIGHT #9#
+INT. SALA - NOITE #9#
 
 FULANO está deitado no sofá, dormindo.
 
 A televisão continua ligada.
 
-INT. COZINHA - NIGHT #10#
+INT. COZINHA - NOITE #10#
 
 SICRANO entra na cozinha e prepara um café.
 
@@ -106,7 +106,7 @@ FADE TO:
 # ATO III
 = Sinopse do terceiro ato
 
-INT. COZINHA - NIGHT #11#
+INT. COZINHA - NOITE #11#
 
 Relógio mostra 3h da manhã. SICRANO está pegando uma bebida na geladeira.
 
@@ -116,7 +116,7 @@ Preciso dar um jeito em minha vida
 
 Objetivo dessa cena é testar o diálogo com Off screen (O.S.)
 
-EXT. QUINTAL - NIGHT #12#
+EXT. QUINTAL - NOITE #12#
 
 O objetivo dessa cena é tratar as exceções, tanto em ações quanto em personagens.
 
@@ -146,7 +146,7 @@ Continuação do diálogo.
 
 ===
 
-INT. SALA - DAY #13#
+INT. SALA - DIA #13#
 
 Uma cena forçada com ponto no início, e para não ficar uma cena sem nenhum personagem vamos dizer que FULANO está nela lendo um livro.
 
