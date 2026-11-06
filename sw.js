@@ -1,4 +1,4 @@
-const VERSAO = '1.21.0';
+const VERSAO = '1.21.1';
 const ARQUIVOS = [
   './',
   'css/app.css',
@@ -46,7 +46,12 @@ const ARQUIVOS = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSAO).then(c => c.addAll(ARQUIVOS)).then(() => self.skipWaiting()));
+  // cache:'reload' ignora o cache HTTP do navegador: a versão nova é baixada inteira e sem misturar arquivos velhos
+  e.waitUntil(
+    caches.open(VERSAO)
+      .then(c => c.addAll(ARQUIVOS.map(u => new Request(u, { cache: 'reload' }))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', e => {
@@ -57,15 +62,24 @@ self.addEventListener('activate', e => {
   );
 });
 
+/*
+ * Cache primeiro, atualização em segundo plano.
+ * Antes era "rede primeiro": sem internet mas com Wi-Fi/dados ligados a conexão fica pendurada e o app
+ * esperava a rede desistir antes de usar o cache (o PDF, que baixa pdfkit e fontes na hora, parecia quebrado).
+ * Agora o que já está guardado responde na hora, offline ou não; a cópia nova é baixada por trás e vale na próxima abertura.
+ */
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET' || !e.request.url.startsWith(self.location.origin)) return;
-  e.respondWith(
-    fetch(e.request)
-      .then(resp => {
-        const copia = resp.clone();
-        caches.open(VERSAO).then(c => c.put(e.request, copia));
-        return resp;
-      })
-      .catch(() => caches.match(e.request, { ignoreSearch: true }))
-  );
+  const req = e.request;
+  if (req.method !== 'GET' || !req.url.startsWith(self.location.origin)) return;
+  e.respondWith((async () => {
+    const cache = await caches.open(VERSAO);
+    let guardado = await cache.match(req, { ignoreSearch: true });
+    if (!guardado && req.mode === 'navigate') guardado = await cache.match('./');
+    const atualiza = fetch(req).then(resp => {
+      if (resp.ok && resp.type === 'basic') cache.put(req, resp.clone());
+      return resp;
+    });
+    if (guardado) { e.waitUntil(atualiza.catch(() => {})); return guardado; }
+    return atualiza; // ainda não está no cache: só a rede pode responder
+  })());
 });
