@@ -256,15 +256,27 @@ export async function makeCharacterSheet({ character, docName }) {
             doc.font('I').fontSize(10).fillColor(GRAY).text('Presente nesta cena, sem fala.', X, doc.y, { width: W });
             doc.fillColor('#000').moveDown(0.6);
         }
-        for (const sp of speeches) {
+        /* cada fala vira um bloco próprio: etiqueta "FALA n" e filete horizontal entre elas,
+         * para o ator não confundir falas seguidas (mesmo sem nada entre elas no roteiro) */
+        speeches.forEach((sp, n) => {
             const ext = extensionOf(sp.label);
-            const h = sp.parts.reduce((n, t) => n + textHeight(doc, t, W, SP) + 4, ext ? 12 : 0);
-            need(doc, Math.min(h, 70));
-            if (ext) doc.font('I').fontSize(9).fillColor(GRAY).text(ext, X, doc.y, { width: W });
-            doc.font('N').fontSize(SP).fillColor('#000');
-            for (const t of sp.parts) { inline(doc, t, X, W); doc.moveDown(0.25); }
+            const h = sp.parts.reduce((t, p) => t + textHeight(doc, p, W, SP) + 4, 14);
+            need(doc, Math.min(h, 80));
+            if (n > 0) {
+                const y = doc.y;
+                doc.moveTo(X, y).lineTo(PAGE.w - PAGE.right, y).lineWidth(0.5).strokeColor('#cccccc').stroke();
+                doc.y = y + 8;
+            }
+            doc.font('B').fontSize(8).fillColor(GRAY)
+                .text(`FALA ${n + 1}${ext ? '  ·  ' + ext : ''}`, X, doc.y, { width: W, characterSpacing: 1 });
+            doc.moveDown(0.3).font('N').fontSize(SP).fillColor('#000');
+            for (const t of sp.parts) {
+                if (doc.y + textHeight(doc, t, W, SP) > PAGE.h - PAGE.bottom) doc.addPage();
+                inline(doc, t, X, W);
+                doc.moveDown(0.25);
+            }
             doc.moveDown(0.5);
-        }
+        });
         /* separação visual entre cenas */
         doc.moveDown(0.4);
         const y = doc.y;
