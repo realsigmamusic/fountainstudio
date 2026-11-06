@@ -170,3 +170,4 @@ dialog menu{display:flex;gap:8px;justify-content:flex-end;padding:0;margin:14px 
 .sumChars th,.sumChars td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--bd)}
 .sumChars th{font-size:12px;color:var(--mu);font-weight:600;position:sticky;top:0;background:var(--bg)}
 .sumChars td+td,.sumChars th+th{text-align:right;font-variant-numeric:tabular-nums}
+.fld[hidden]{display:none}

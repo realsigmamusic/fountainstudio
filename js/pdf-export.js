@@ -12,7 +12,11 @@ function loadScript(src) {
         document.head.append(s);
     });
 }
-export async function makePdf(text, cfg, highlighted) {
+export async function makePdf(text, cfg, highlighted, docName = '') {
+    if (cfg.format === 'teatro') {
+        const { makeTheatrePdf } = await import('./theatre-pdf.js');
+        return makeTheatrePdf(text, cfg, highlighted, docName);
+    }
     await loadScript('js/vendor/pdfkit.standalone.js');
     await loadFonts();
     const parsed = parse(text, cfg, false);

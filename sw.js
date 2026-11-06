@@ -1,4 +1,4 @@
-const VERSAO = '1.20.1';
+const VERSAO = '1.21.0';
 const ARQUIVOS = [
   './',
   'css/app.css',
@@ -29,6 +29,7 @@ const ARQUIVOS = [
   'js/pdf-export.js',
   'js/production-ui.js',
   'js/production-pdf.js',
+  'js/theatre-pdf.js',
   'js/storage.js',
   'js/vendor/codemirror.js',
   'js/vendor/he.js',

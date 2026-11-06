@@ -498,7 +498,10 @@ window.launchQueue?.setConsumer(async (p) => {
     const f = await h.getFile();
     await newDoc(f.name.replace(/\.[^.]+$/, ''), await f.text());
 });
+/* campos que só valem para o formato de cinema (escondidos quando o formato é teatro) */
+const CINEMA_ONLY = new Set(['scenes_numbers', 'embolden_scene_headers', 'embolden_character_names', 'use_dual_dialogue', 'split_dialogue', 'double_space_between_scenes', 'each_scene_on_new_page', 'merge_empty_lines', 'print_sections', 'print_synopsis', 'print_notes', 'print_dialogue_numbers', 'invisible_section_bookmarks']);
 const FIELDS = [
+    ['format', 'Formato', [['cinema', 'Cinema'], ['teatro', 'Teatro']]],
     ['print_profile', 'Papel', [['a4', 'A4'], ['usletter', 'Carta (US)']]],
     ['scenes_numbers', 'Numeração de cenas', [['both', 'Ambas as margens'], ['left', 'Esquerda'], ['right', 'Direita'], ['none', 'Nenhuma']]],
     ['print_title_page', 'Página de título', 'b'], ['show_page_numbers', 'Numerar páginas', 'b'],
@@ -536,8 +539,15 @@ function buildForm() {
         }
         inp.dataset.key = key;
         row.append(inp);
+        if (CINEMA_ONLY.has(key)) row.dataset.cinema = '1';
         box.append(row);
     }
+    const sync = () => {
+        const teatro = box.querySelector('[data-key="format"]').value === 'teatro';
+        box.querySelectorAll('[data-cinema]').forEach(r => { r.hidden = teatro; });
+    };
+    box.querySelector('[data-key="format"]').onchange = sync;
+    sync();
     const hl = $('#hlList');
     hl.textContent = '';
     for (const c of summary.characters) {
@@ -564,7 +574,7 @@ $('#pdfGo').onclick = async () => {
     await new Promise(r => setTimeout(r, 30)); // deixa o botão repintar antes do trabalho pesado
     try {
         const { makePdf } = await import('./pdf-export.js'); // o pdfkit só é baixado quando se exporta o primeiro PDF
-        const { blob, pages } = await makePdf(ed.getText(), cfg, hl);
+        const { blob, pages } = await makePdf(ed.getText(), cfg, hl, doc.name);
         showPdf(blob, pages);
         $('#dlgPdf').close();
     }

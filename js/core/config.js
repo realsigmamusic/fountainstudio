@@ -1,4 +1,5 @@
 export const defaultConfig = {
+    format: 'cinema', // 'cinema' ou 'teatro' (layout do PDF)
     number_scenes_on_save: false, embolden_scene_headers: true, embolden_character_names: false,
     show_page_numbers: true, split_dialogue: true, print_title_page: true, print_profile: 'a4',
     double_space_between_scenes: false, print_sections: false, print_synopsis: false, print_actions: true,
